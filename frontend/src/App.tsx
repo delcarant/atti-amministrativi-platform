@@ -2,15 +2,17 @@ import React from 'react';
 import { BrowserRouter, Route, Routes, NavLink } from 'react-router-dom';
 import { ReactKeycloakProvider } from '@react-keycloak/web';
 import {
-  Page,
-  PageHeader,
-  PageSidebar,
+  Masthead,
+  MastheadBrand,
+  MastheadContent,
+  MastheadMain,
   Nav,
   NavGroup,
   NavItem,
   NavList,
-  PageHeaderTools,
-  PageHeaderToolsItem,
+  Page,
+  PageSidebar,
+  PageSidebarBody,
 } from '@patternfly/react-core';
 import keycloak from './keycloak';
 import Dashboard from './pages/Dashboard';
@@ -77,19 +79,23 @@ const App: React.FC = () => {
   );
 
   const header = (
-    <PageHeader
-      logo="🏛️ Atti Amministrativi"
-      headerTools={
-        <PageHeaderTools>
-          <PageHeaderToolsItem>
-            {keycloak.authenticated ? `👤 ${keycloak.tokenParsed?.preferred_username}` : 'Non autenticato'}
-          </PageHeaderToolsItem>
-        </PageHeaderTools>
-      }
-    />
+    <Masthead>
+      <MastheadMain>
+        <MastheadBrand>🏛️ Atti Amministrativi</MastheadBrand>
+      </MastheadMain>
+      <MastheadContent>
+        <span>
+          {keycloak.authenticated ? `👤 ${keycloak.tokenParsed?.preferred_username}` : 'Non autenticato'}
+        </span>
+      </MastheadContent>
+    </Masthead>
   );
 
-  const sidebar = <PageSidebar nav={navItems} />;
+  const sidebar = (
+    <PageSidebar>
+      <PageSidebarBody>{navItems}</PageSidebarBody>
+    </PageSidebar>
+  );
 
   return (
     <ReactKeycloakProvider authClient={keycloak}>
