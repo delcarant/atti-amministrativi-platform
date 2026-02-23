@@ -52,11 +52,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
 
     // Rimuove le classi tema precedenti e applica quella nuova
-    document.body.classList.forEach((cls) => {
+    for (const cls of Array.from(document.body.classList)) {
       if (cls.startsWith('tema-')) {
         document.body.classList.remove(cls);
       }
-    });
+    }
     document.body.classList.add(`tema-${theme.clientCode}`);
   }, [theme]);
 

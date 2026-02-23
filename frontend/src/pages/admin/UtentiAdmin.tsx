@@ -62,7 +62,7 @@ const UtentiAdmin: React.FC = () => {
   });
 
   // Messaggi operazione
-  const [messaggioOperazione, setMessaggioOperazione] = useState<{ tipo: string; testo: string } | null>(null);
+  const [messaggioOperazione, setMessaggioOperazione] = useState<{ tipo: 'success' | 'danger' | 'warning' | 'info'; testo: string } | null>(null);
   const [operazioneInCorso, setOperazioneInCorso] = useState(false);
 
   /** Carica la lista utenti dal backend */

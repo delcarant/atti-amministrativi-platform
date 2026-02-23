@@ -542,3 +542,123 @@ Dashboard metriche avanzate con:
 | GET    | `/decisions`                          | Lista DMN disponibili nel motore  |
 
 Tutti gli endpoint `/admin/*` richiedono il ruolo `admin` nel token JWT Keycloak.
+
+---
+
+## 🎨 Personalizzazione Tema
+
+L'applicazione frontend supporta un sistema di **tematizzazione multi-cliente** che permette di adattare l'interfaccia alle linee guida di design di ogni ente pubblico, senza modificare il codice sorgente.
+
+### Cambiare il tema cliente
+
+Il tema si configura tramite la variabile d'ambiente `REACT_APP_THEME_CLIENT`:
+
+```bash
+# Modifica il file frontend/.env
+REACT_APP_THEME_CLIENT=roma      # Tema Roma Capitale (predefinito)
+REACT_APP_THEME_CLIENT=default   # Tema generico PA (blu Bootstrap Italia)
+```
+
+> ⚠️ Dopo aver modificato il file `.env`, riavvia il server di sviluppo (`npm start`) o ricompila l'applicazione (`npm run build`).
+
+### Temi disponibili
+
+| Codice     | Nome             | Colore Primario | Note                              |
+|------------|------------------|-----------------|-----------------------------------|
+| `roma`     | Roma Capitale    | `#8B0000` (rosso carminio) | Tema predefinito      |
+| `default`  | Ente Pubblico PA | `#0066CC` (blu PA)         | Tema generico neutro  |
+
+### Aggiungere un nuovo tema
+
+Per aggiungere un nuovo tema cliente (es. Comune di Milano):
+
+1. **Creare il file tema** `frontend/src/themes/comuni/milano.ts`:
+
+```typescript
+import { AppTheme } from '../theme.types';
+
+export const temaMilano: AppTheme = {
+  clientName: 'Comune di Milano',
+  clientCode: 'milano',
+  logoUrl: '/assets/loghi/milano.svg',
+  logoAlt: 'Comune di Milano - Logo',
+  colorePrimario: '#C41230',       // Rosso Milano
+  coloreSecondario: '#9B0E24',
+  coloreAccento: '#FFD700',
+  coloreSfondo: '#FFFFFF',
+  coloreTesto: '#1A1A1A',
+  coloreHeader: '#C41230',
+  coloreHeaderTesto: '#FFFFFF',
+  coloreFooter: '#2C2C2C',
+  fontFamily: "'Titillium Web', sans-serif",
+  denominazioneEnte: 'Comune di Milano',
+  tipoEnte: 'Comune',
+  sitoWeb: 'https://www.comune.milano.it',
+  tagline: 'Servizi digitali per i cittadini di Milano',
+};
+```
+
+2. **Registrare il tema** in `frontend/src/themes/comuni/index.ts`:
+
+```typescript
+export { temaRoma } from './roma';
+export { temaMilano } from './milano';  // aggiungi questa riga
+```
+
+3. **Registrare nel contesto** in `frontend/src/themes/ThemeContext.tsx`, aggiungere alla mappa `TEMI_DISPONIBILI`:
+
+```typescript
+import { temaMilano } from './comuni';
+
+const TEMI_DISPONIBILI: Record<string, AppTheme> = {
+  default: temaDefault,
+  roma: temaRoma,
+  milano: temaMilano,   // aggiungi questa riga
+};
+```
+
+4. **Aggiungere le variabili CSS** in `frontend/src/themes/themes.css`:
+
+```css
+.tema-milano {
+  --bs-primary: #c41230;
+  --bs-primary-rgb: 196, 18, 48;
+  --it-header-bg-color: #c41230;
+  /* ... */
+}
+```
+
+5. **Configurare il cliente** nel file `.env`:
+
+```bash
+REACT_APP_THEME_CLIENT=milano
+```
+
+### Sostituire il logo
+
+Il logo dell'ente si configura nel file del tema (`logoUrl`). Per sostituire il logo placeholder:
+
+1. Salvare il logo SVG (o PNG/WebP) nella cartella `frontend/public/assets/loghi/`
+2. Aggiornare il percorso `logoUrl` nel file del tema corrispondente
+
+```typescript
+logoUrl: '/assets/loghi/mio-ente-logo.svg',
+logoAlt: 'Mio Ente - Logo ufficiale',
+```
+
+> 💡 Il logo `roma-capitale.svg` è un **placeholder** per il setup iniziale. Il logo ufficiale di Roma Capitale va inserito manualmente rispettando i diritti d'uso.
+
+### Struttura dei file tema
+
+```
+frontend/src/themes/
+├── theme.types.ts          # Interfaccia TypeScript AppTheme
+├── default.ts              # Tema generico PA (blu Bootstrap Italia)
+├── ThemeContext.tsx        # Provider React del tema
+├── useTheme.ts             # Custom hook useTheme()
+├── themes.css              # Variabili CSS per ogni tema
+├── roma.css                # Override CSS specifici Roma Capitale
+└── comuni/
+    ├── index.ts            # Export di tutti i temi
+    └── roma.ts             # Tema Roma Capitale
+```

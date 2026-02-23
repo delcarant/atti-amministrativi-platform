@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
+  Button,
   Collapse,
   Header,
   HeaderBrand,
   HeaderContent,
-  HeaderLinkZone,
   HeaderRightZone,
   Headers,
   HeaderToggler,
@@ -15,7 +15,6 @@ import {
   NavLink as DrkNavLink,
 } from 'design-react-kit';
 import { useKeycloak } from '@react-keycloak/web';
-import { Button } from 'design-react-kit';
 import { useTheme } from '../themes/useTheme';
 
 /** Header istituzionale conforme alle linee guida PA */
@@ -41,14 +40,6 @@ const PAHeader: React.FC = () => {
           <HeaderBrand href={theme.sitoWeb ?? '#'} target="_blank" rel="noreferrer">
             {theme.denominazioneEnte}
           </HeaderBrand>
-          <HeaderLinkZone>
-            <a
-              className="btn btn-sm btn-outline-light ms-2"
-              href="#main-content"
-            >
-              Vai al contenuto
-            </a>
-          </HeaderLinkZone>
           <HeaderRightZone>
             {keycloak.authenticated ? (
               <span className="text-white me-3 small">
