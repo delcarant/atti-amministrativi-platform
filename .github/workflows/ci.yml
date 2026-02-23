@@ -10,6 +10,8 @@ jobs:
   build-java:
     name: Build & Test Java
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +31,8 @@ jobs:
   build-frontend:
     name: Build Frontend
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +52,8 @@ jobs:
   lint-docker:
     name: Lint Dockerfile
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
