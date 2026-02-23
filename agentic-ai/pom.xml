@@ -20,7 +20,7 @@
       <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>io.quarkiverse.langchain4j</groupId>
       <artifactId>quarkus-langchain4j-openai</artifactId>
       <version>${quarkus-langchain4j.version}</version>
     </dependency>
