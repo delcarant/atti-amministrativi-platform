@@ -4,28 +4,31 @@ import {
   Card,
   CardBody,
   CardTitle,
-  Grid,
-  GridItem,
-  PageSection,
+  Col,
+  Container,
+  Progress,
+  Row,
   Spinner,
-  Title,
-} from '@patternfly/react-core';
+} from 'design-react-kit';
 import { useKeycloak } from '@react-keycloak/web';
 import axios from 'axios';
 
-/** URL del dashboard Grafana preconfigurato */
+/** URL del dashboard Grafana embedded */
 const GRAFANA_DASHBOARD_URL = 'http://localhost:3001/d/atti-dashboard';
+
+/** Intervallo di auto-refresh in millisecondi */
+const REFRESH_INTERVAL_MS = 30000;
 
 /** Struttura metriche JVM */
 interface MetricheJVM {
-  heapUsato: number;
-  heapTotale: number;
-  cpuUsage: number;
+  heapUsato: number;     // MB
+  heapTotale: number;    // MB
+  cpuUsage: number;      // percentuale 0-100
   threadAttivi: number;
-  uptime: number;
+  uptime: number;        // ore
 }
 
-/** Struttura metriche statistiche atti */
+/** Struttura statistiche atti */
 interface StatisticheAtti {
   pubblicata: number;
   inLavorazione: number;
@@ -33,13 +36,9 @@ interface StatisticheAtti {
   sospesa: number;
 }
 
-/** Intervallo auto-refresh in millisecondi (30 secondi) */
-const REFRESH_INTERVAL_MS = 30000;
-
 /**
- * Dashboard metriche avanzate.
- * Incorpora un iframe Grafana e mostra metriche native PatternFly
- * con auto-refresh ogni 30 secondi.
+ * Pagina metriche con visualizzazione JVM, statistiche atti e dashboard Grafana.
+ * Si aggiorna automaticamente ogni 30 secondi.
  */
 const MetricheAdmin: React.FC = () => {
   const { keycloak } = useKeycloak();
@@ -47,7 +46,7 @@ const MetricheAdmin: React.FC = () => {
   const [statistiche, setStatistiche] = useState<StatisticheAtti | null>(null);
   const [caricamento, setCaricamento] = useState(true);
   const [errore, setErrore] = useState<string | null>(null);
-  const [ultimoAggiornamento, setUltimoAggiornamento] = useState<Date>(new Date());
+  const [ultimoAggiornamento, setUltimoAggiornamento] = useState(new Date());
   const [contatore, setContatore] = useState(REFRESH_INTERVAL_MS / 1000);
   const intervalloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -110,140 +109,126 @@ const MetricheAdmin: React.FC = () => {
     return () => {
       if (intervalloRef.current) clearInterval(intervalloRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keycloak.token]);
 
+  const percHeap = metriche && metriche.heapTotale > 0
+    ? Math.min(Math.round((metriche.heapUsato / metriche.heapTotale) * 100), 100)
+    : 0;
+
   return (
-    <PageSection>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <Title headingLevel="h1" size="xl">
-          Metriche
-        </Title>
-        <div style={{ color: '#6a6e73', fontSize: '0.875rem' }}>
-          {caricamento && <Spinner size="md" aria-label="Aggiornamento in corso" style={{ marginRight: '0.5rem' }} />}
-          🔄 Aggiornamento automatico in {contatore}s — Ultimo: {ultimoAggiornamento.toLocaleTimeString('it-IT')}
+    <Container className="py-4">
+      {/* Header con contatore auto-refresh */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="h3 mb-0">Metriche</h1>
+        <div className="text-muted small">
+          {caricamento && <Spinner small active label="Aggiornamento in corso..." className="me-2" />}
+          🔄 Aggiornamento in {contatore}s — Ultimo: {ultimoAggiornamento.toLocaleTimeString('it-IT')}
         </div>
       </div>
 
       {errore && (
-        <Alert variant="warning" title="Avviso metriche" isInline style={{ marginBottom: '1rem' }}>
+        <Alert color="warning" className="mb-3">
           {errore} — Le metriche JVM potrebbero non essere disponibili.
         </Alert>
       )}
 
       {/* Metriche JVM */}
-      <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
-        Metriche JVM Process Engine
-      </Title>
-      <Grid hasGutter style={{ marginBottom: '2rem' }}>
-        <GridItem span={3}>
+      <h2 className="h5 mb-3">Metriche JVM Process Engine</h2>
+      <Row className="mb-4">
+        <Col xs={12} sm={6} lg={3} className="mb-3">
           <Card>
-            <CardTitle>Heap Memory</CardTitle>
             <CardBody>
-              <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              <CardTitle tag="h3" className="h6 text-muted mb-2">Heap Memory</CardTitle>
+              <span className="d-block" style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                 {metriche?.heapUsato ?? '—'} MB
               </span>
-              <br />
-              <span style={{ fontSize: '0.875rem', color: '#6a6e73' }}>
-                / {metriche?.heapTotale ?? '—'} MB totali
-              </span>
+              <small className="text-muted">/ {metriche?.heapTotale ?? '—'} MB totali</small>
               {metriche && metriche.heapTotale > 0 && (
-                <div
-                  style={{
-                    marginTop: '0.5rem',
-                    height: '8px',
-                    backgroundColor: '#d2d2d2',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.min((metriche.heapUsato / metriche.heapTotale) * 100, 100)}%`,
-                      height: '100%',
-                      backgroundColor: metriche.heapUsato / metriche.heapTotale > 0.8 ? '#c9190b' : '#3e8635',
-                      borderRadius: '4px',
-                    }}
-                  />
-                </div>
+                <Progress
+                  value={percHeap}
+                  color={percHeap > 80 ? 'danger' : 'success'}
+                  className="mt-2"
+                  aria-label={`Heap memory: ${percHeap}%`}
+                />
               )}
             </CardBody>
           </Card>
-        </GridItem>
-        <GridItem span={3}>
+        </Col>
+        <Col xs={12} sm={6} lg={3} className="mb-3">
           <Card>
-            <CardTitle>CPU Usage</CardTitle>
             <CardBody>
+              <CardTitle tag="h3" className="h6 text-muted mb-2">CPU Usage</CardTitle>
               <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                 {metriche?.cpuUsage ?? '—'}%
               </span>
+              {metriche && (
+                <Progress
+                  value={metriche.cpuUsage}
+                  color={metriche.cpuUsage > 80 ? 'danger' : 'primary'}
+                  className="mt-2"
+                  aria-label={`CPU: ${metriche.cpuUsage}%`}
+                />
+              )}
             </CardBody>
           </Card>
-        </GridItem>
-        <GridItem span={3}>
+        </Col>
+        <Col xs={12} sm={6} lg={3} className="mb-3">
           <Card>
-            <CardTitle>Thread Attivi</CardTitle>
             <CardBody>
+              <CardTitle tag="h3" className="h6 text-muted mb-2">Thread Attivi</CardTitle>
               <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                 {metriche?.threadAttivi ?? '—'}
               </span>
             </CardBody>
           </Card>
-        </GridItem>
-        <GridItem span={3}>
+        </Col>
+        <Col xs={12} sm={6} lg={3} className="mb-3">
           <Card>
-            <CardTitle>Uptime</CardTitle>
             <CardBody>
+              <CardTitle tag="h3" className="h6 text-muted mb-2">Uptime</CardTitle>
               <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
                 {metriche?.uptime ?? '—'}h
               </span>
             </CardBody>
           </Card>
-        </GridItem>
-      </Grid>
+        </Col>
+      </Row>
 
       {/* Distribuzione stati atti */}
-      <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
-        Distribuzione Stati Atti
-      </Title>
-      <Grid hasGutter style={{ marginBottom: '2rem' }}>
+      <h2 className="h5 mb-3">Distribuzione Stati Atti</h2>
+      <Row className="mb-4">
         {[
           { etichetta: 'Pubblicati', valore: statistiche?.pubblicata, colore: '#3e8635' },
           { etichetta: 'In Lavorazione', valore: statistiche?.inLavorazione, colore: '#f0ab00' },
           { etichetta: 'Rifiutati', valore: statistiche?.rifiutata, colore: '#c9190b' },
           { etichetta: 'Sospesi', valore: statistiche?.sospesa, colore: '#6a6e73' },
         ].map(({ etichetta, valore, colore }) => (
-          <GridItem span={3} key={etichetta}>
+          <Col key={etichetta} xs={6} lg={3} className="mb-3">
             <Card>
-              <CardTitle>{etichetta}</CardTitle>
               <CardBody>
+                <CardTitle tag="h3" className="h6 text-muted mb-2">{etichetta}</CardTitle>
                 <span style={{ fontSize: '2rem', fontWeight: 'bold', color: colore }}>
                   {valore ?? 0}
                 </span>
               </CardBody>
             </Card>
-          </GridItem>
+          </Col>
         ))}
-      </Grid>
+      </Row>
 
       {/* Embed Grafana */}
-      <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
-        Dashboard Grafana
-      </Title>
+      <h2 className="h5 mb-3">Dashboard Grafana</h2>
       <Card>
-        <CardBody style={{ padding: 0 }}>
+        <CardBody className="p-0">
           <iframe
             src={GRAFANA_DASHBOARD_URL}
             title="Dashboard Grafana — Atti Amministrativi"
-            style={{
-              width: '100%',
-              height: '600px',
-              border: 'none',
-              borderRadius: '4px',
-            }}
+            style={{ width: '100%', height: '600px', border: 'none', borderRadius: '4px' }}
           />
         </CardBody>
       </Card>
-    </PageSection>
+    </Container>
   );
 };
 

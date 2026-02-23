@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80" role="img" aria-label="Roma Capitale - Stemma placeholder">
+  <title>Roma Capitale</title>
+  <!-- Stemma stilizzato Roma Capitale — placeholder, sostituire con il logo ufficiale -->
+  <rect width="80" height="80" rx="8" fill="#8B0000"/>
+  <text x="40" y="50" font-family="'Titillium Web', Arial, sans-serif" font-size="28" font-weight="bold" fill="#FFFFFF" text-anchor="middle">RC</text>
+  <rect x="10" y="65" width="60" height="3" fill="#FFD700" rx="1"/>
+</svg>

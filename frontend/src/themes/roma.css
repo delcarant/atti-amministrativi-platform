@@ -1,0 +1,29 @@
+/* Override specifici per il tema Roma Capitale */
+
+.tema-roma .it-header-slim-wrapper {
+  background-color: #6b0000;
+}
+
+.tema-roma .it-header-navbar-wrapper {
+  background-color: #8b0000;
+}
+
+.tema-roma .it-header-navbar-wrapper nav {
+  background-color: #8b0000;
+}
+
+.tema-roma .btn-primary {
+  background-color: #8b0000;
+  border-color: #8b0000;
+}
+
+.tema-roma .btn-primary:hover,
+.tema-roma .btn-primary:focus {
+  background-color: #6b0000;
+  border-color: #6b0000;
+}
+
+.tema-roma a:focus,
+.tema-roma button:focus {
+  outline-color: #ffd700;
+}

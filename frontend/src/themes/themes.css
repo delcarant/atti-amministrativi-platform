@@ -1,0 +1,28 @@
+/* Variabili CSS per ogni tema — override delle variabili Bootstrap Italia */
+
+/* Tema Default (PA generica) */
+.tema-default {
+  --bs-primary: #0066cc;
+  --bs-primary-rgb: 0, 102, 204;
+  --it-header-bg-color: #0066cc;
+  --it-header-slim-bg-color: #004c99;
+  --it-header-center-bg-color: #ffffff;
+  --it-nav-bg-color: #0066cc;
+  --it-focus-outline-color: #0099cc;
+}
+
+/* Tema Roma Capitale */
+.tema-roma {
+  --bs-primary: #8b0000;
+  --bs-primary-rgb: 139, 0, 0;
+  --it-header-bg-color: #8b0000;
+  --it-header-slim-bg-color: #6b0000;
+  --it-header-center-bg-color: #ffffff;
+  --it-nav-bg-color: #8b0000;
+  --it-focus-outline-color: #ffd700;
+}
+
+/* Facilmente aggiungere nuovi clienti:
+.tema-milano { ... }
+.tema-firenze { ... }
+*/

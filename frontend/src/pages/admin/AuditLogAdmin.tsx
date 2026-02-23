@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import {
   Alert,
+  Badge,
   Button,
+  Container,
   FormGroup,
-  FormSelect,
-  FormSelectOption,
-  PageSection,
-  Pagination,
+  Input,
+  Label,
+  Pager,
   Spinner,
-  TextInput,
-  Title,
-  Toolbar,
-  ToolbarContent,
-  ToolbarItem,
-} from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+  Table,
+} from 'design-react-kit';
 import { useAuditLog, AuditFilter } from '../../hooks/useAdmin';
 
 /** Tipi evento disponibili per il filtro */
@@ -31,6 +27,18 @@ const TIPI_EVENTO = [
 
 /** Opzioni page size per la paginazione */
 const PAGE_SIZES = [10, 25, 50, 100];
+
+/** Restituisce il colore del badge per tipo evento */
+const coloreTipoEvento = (tipo: string): string => {
+  switch (tipo) {
+    case 'ATTO_PUBBLICATO': return 'success';
+    case 'ATTO_RIFIUTATO':
+    case 'ERRORE': return 'danger';
+    case 'PROCESSO_AVVIATO': return 'primary';
+    case 'TASK_COMPLETATO': return 'info';
+    default: return 'secondary';
+  }
+};
 
 /**
  * Pagina di visualizzazione e ricerca del log di audit.
@@ -53,6 +61,8 @@ const AuditLogAdmin: React.FC = () => {
   const [filtriApplicati, setFiltriApplicati] = useState<AuditFilter>({ page: 1, pageSize: 10 });
 
   const { eventi, totale, caricamento, errore } = useAuditLog(filtriApplicati);
+
+  const totalePagine = Math.ceil(totale / pageSize) || 1;
 
   /** Applica i filtri correnti e torna alla prima pagina */
   const applicaFiltri = () => {
@@ -80,12 +90,6 @@ const AuditLogAdmin: React.FC = () => {
     setFiltriApplicati({ page: 1, pageSize });
   };
 
-  /** Cambia la pagina corrente */
-  const cambiaPagina = (_evt: React.MouseEvent | React.KeyboardEvent | MouseEvent, nuovaPagina: number) => {
-    setPage(nuovaPagina);
-    setFiltriApplicati({ ...filtriApplicati, page: nuovaPagina });
-  };
-
   /** Esporta il log filtrato come CSV */
   const esportaCSV = () => {
     const intestazione = 'ID,Timestamp,Tipo Evento,ID Processo,Utente,Dettagli\n';
@@ -104,155 +108,181 @@ const AuditLogAdmin: React.FC = () => {
   };
 
   return (
-    <PageSection>
-      <Title headingLevel="h1" size="xl" style={{ marginBottom: '1rem' }}>
-        Audit Log
-      </Title>
+    <Container className="py-4">
+      <h1 className="h3 mb-4">Audit Log</h1>
 
-      {/* Toolbar con filtri avanzati */}
-      <Toolbar style={{ marginBottom: '1rem' }}>
-        <ToolbarContent>
-          <ToolbarItem>
-            <TextInput
-              placeholder="Cerca in tutti i campi..."
-              value={testoRicerca}
-              onChange={(_e, v) => setTestoRicerca(v)}
-              aria-label="Ricerca testo libero"
-            />
-          </ToolbarItem>
-          <ToolbarItem>
-            <FormSelect
-              value={tipoEvento}
-              onChange={(_e, v) => setTipoEvento(v)}
-              aria-label="Tipo evento"
-            >
-              {TIPI_EVENTO.map((t) => (
-                <FormSelectOption key={t} value={t} label={t} />
-              ))}
-            </FormSelect>
-          </ToolbarItem>
-          <ToolbarItem>
-            <TextInput
-              placeholder="Filtra per utente"
-              value={filtroUtente}
-              onChange={(_e, v) => setFiltroUtente(v)}
-              aria-label="Filtra per utente"
-            />
-          </ToolbarItem>
-          <ToolbarItem>
-            <FormGroup label="Da" fieldId="auditDa">
-              <TextInput
-                id="auditDa"
-                type="date"
-                value={filtroDa}
-                onChange={(_e, v) => setFiltroDa(v)}
-                aria-label="Data da"
-              />
-            </FormGroup>
-          </ToolbarItem>
-          <ToolbarItem>
-            <FormGroup label="A" fieldId="auditA">
-              <TextInput
-                id="auditA"
-                type="date"
-                value={filtroA}
-                onChange={(_e, v) => setFiltroA(v)}
-                aria-label="Data a"
-              />
-            </FormGroup>
-          </ToolbarItem>
-          <ToolbarItem>
-            <Button variant="primary" onClick={applicaFiltri}>Applica</Button>
-          </ToolbarItem>
-          <ToolbarItem>
-            <Button variant="link" onClick={reimpostaFiltri}>Reimposta</Button>
-          </ToolbarItem>
-          <ToolbarItem>
-            <Button variant="secondary" onClick={esportaCSV} isDisabled={eventi.length === 0}>
-              ⬇️ Esporta CSV
-            </Button>
-          </ToolbarItem>
-          <ToolbarItem>
-            <FormSelect
-              value={pageSize}
-              onChange={(_e, v) => {
-                const nuovaDim = Number(v);
-                setPageSize(nuovaDim);
-                setFiltriApplicati({ ...filtriApplicati, pageSize: nuovaDim, page: 1 });
-              }}
-              aria-label="Righe per pagina"
-            >
-              {PAGE_SIZES.map((dim) => (
-                <FormSelectOption key={dim} value={dim} label={`${dim} per pagina`} />
-              ))}
-            </FormSelect>
-          </ToolbarItem>
-        </ToolbarContent>
-      </Toolbar>
+      {/* Barra filtri avanzati */}
+      <div className="d-flex gap-2 align-items-end mb-3 flex-wrap">
+        <FormGroup>
+          <Input
+            id="auditTesto"
+            label="Cerca"
+            placeholder="Cerca in tutti i campi..."
+            value={testoRicerca}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTestoRicerca(e.target.value)}
+          />
+        </FormGroup>
+        <div>
+          <Label for="auditTipoEvento">Tipo evento</Label>
+          <Input
+            id="auditTipoEvento"
+            type="select"
+            value={tipoEvento}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTipoEvento(e.target.value)}
+            aria-label="Tipo evento"
+            noWrapper
+          >
+            {TIPI_EVENTO.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </Input>
+        </div>
+        <FormGroup>
+          <Input
+            id="auditUtente"
+            label="Utente"
+            placeholder="Filtra per utente"
+            value={filtroUtente}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroUtente(e.target.value)}
+          />
+        </FormGroup>
+        <FormGroup>
+          <Input
+            id="auditDa"
+            type="date"
+            label="Da"
+            value={filtroDa}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroDa(e.target.value)}
+          />
+        </FormGroup>
+        <FormGroup>
+          <Input
+            id="auditA"
+            type="date"
+            label="A"
+            value={filtroA}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroA(e.target.value)}
+          />
+        </FormGroup>
+        <div>
+          <Label for="auditPageSize">Righe/pag.</Label>
+          <Input
+            id="auditPageSize"
+            type="select"
+            value={pageSize}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const dim = Number(e.target.value);
+              setPageSize(dim);
+              setFiltriApplicati({ ...filtriApplicati, pageSize: dim, page: 1 });
+            }}
+            aria-label="Righe per pagina"
+            noWrapper
+          >
+            {PAGE_SIZES.map((dim) => (
+              <option key={dim} value={dim}>{dim} per pagina</option>
+            ))}
+          </Input>
+        </div>
+        <div className="d-flex gap-2">
+          <Button color="primary" onClick={applicaFiltri}>Applica</Button>
+          <Button color="secondary" outline onClick={reimpostaFiltri}>Reimposta</Button>
+          <Button color="secondary" outline disabled={eventi.length === 0} onClick={esportaCSV}>
+            ⬇ Esporta CSV
+          </Button>
+        </div>
+      </div>
 
-      {/* Stato caricamento o errore */}
-      {caricamento && <Spinner aria-label="Caricamento audit log" size="xl" />}
+      {caricamento && (
+        <div className="text-center py-4">
+          <Spinner active label="Caricamento audit log..." />
+        </div>
+      )}
+
       {errore && (
-        <Alert variant="danger" title="Errore caricamento audit log" isInline>
-          {errore}
-        </Alert>
+        <Alert color="danger">{errore}</Alert>
       )}
 
       {/* Tabella eventi */}
       {!caricamento && !errore && (
         <>
-          <Table aria-label="Audit Log">
-            <Thead>
-              <Tr>
-                <Th>Timestamp</Th>
-                <Th>Tipo Evento</Th>
-                <Th>ID Processo</Th>
-                <Th>Utente</Th>
-                <Th>Dettagli</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
+          <Table responsive hover striped aria-label="Audit Log">
+            <thead>
+              <tr>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Tipo Evento</th>
+                <th scope="col">ID Processo</th>
+                <th scope="col">Utente</th>
+                <th scope="col">Dettagli</th>
+              </tr>
+            </thead>
+            <tbody>
               {eventi.length === 0 ? (
-                <Tr>
-                  <Td colSpan={5}>Nessun evento trovato</Td>
-                </Tr>
+                <tr>
+                  <td colSpan={5} className="text-center text-muted py-3">Nessun evento trovato</td>
+                </tr>
               ) : (
                 eventi.map((e) => (
-                  <Tr
-                    key={e.id}
-                    style={
-                      e.tipoEvento === 'ERRORE'
-                        ? { backgroundColor: '#ffd7d7', color: '#c9190b' }
-                        : undefined
-                    }
-                  >
-                    <Td>{e.timestamp ? new Date(e.timestamp).toLocaleString('it-IT') : '-'}</Td>
-                    <Td>{e.tipoEvento}</Td>
-                    <Td>{e.processoId ?? '-'}</Td>
-                    <Td>{e.utente}</Td>
-                    <Td>{e.dettagli}</Td>
-                  </Tr>
+                  <tr key={e.id}>
+                    <td>{e.timestamp ? new Date(e.timestamp).toLocaleString('it-IT') : '-'}</td>
+                    <td>
+                      <Badge color={coloreTipoEvento(e.tipoEvento)} pill>
+                        {e.tipoEvento}
+                      </Badge>
+                    </td>
+                    <td>{e.processoId ?? '-'}</td>
+                    <td>{e.utente}</td>
+                    <td>{e.dettagli}</td>
+                  </tr>
                 ))
               )}
-            </Tbody>
+            </tbody>
           </Table>
 
           {/* Paginazione */}
-          <Pagination
-            itemCount={totale}
-            perPage={pageSize}
-            page={page}
-            onSetPage={cambiaPagina}
-            onPerPageSelect={(_evt, nuovaDim) => {
-              setPageSize(nuovaDim);
-              setFiltriApplicati({ ...filtriApplicati, pageSize: nuovaDim, page: 1 });
-            }}
-            perPageOptions={PAGE_SIZES.map((dim) => ({ title: `${dim}`, value: dim }))}
-            style={{ marginTop: '1rem' }}
-          />
+          {totalePagine > 1 && (
+            <Pager
+              aria-label="Paginazione audit log"
+              className="mt-3"
+              listClassName="justify-content-center"
+            >
+              <li className="page-item">
+                <button
+                  className="page-link"
+                  disabled={page <= 1}
+                  onClick={() => {
+                    const nuovaPagina = page - 1;
+                    setPage(nuovaPagina);
+                    setFiltriApplicati({ ...filtriApplicati, page: nuovaPagina });
+                  }}
+                  aria-label="Pagina precedente"
+                >
+                  «
+                </button>
+              </li>
+              <li className="page-item active">
+                <span className="page-link">
+                  Pagina {page} di {totalePagine}
+                </span>
+              </li>
+              <li className="page-item">
+                <button
+                  className="page-link"
+                  disabled={page >= totalePagine}
+                  onClick={() => {
+                    const nuovaPagina = page + 1;
+                    setPage(nuovaPagina);
+                    setFiltriApplicati({ ...filtriApplicati, page: nuovaPagina });
+                  }}
+                  aria-label="Pagina successiva"
+                >
+                  »
+                </button>
+              </li>
+            </Pager>
+          )}
         </>
       )}
-    </PageSection>
+    </Container>
   );
 };
 

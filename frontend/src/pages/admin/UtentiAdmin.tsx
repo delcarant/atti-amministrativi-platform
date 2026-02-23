@@ -1,22 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Badge,
   Button,
-  Checkbox,
+  Container,
   FormGroup,
-  FormSelect,
-  FormSelectOption,
+  Input,
+  Label,
   Modal,
-  ModalVariant,
-  PageSection,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Spinner,
-  TextInput,
-  Title,
-  Toolbar,
-  ToolbarContent,
-  ToolbarItem,
-} from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+  Table,
+} from 'design-react-kit';
 import { useKeycloak } from '@react-keycloak/web';
 import axios from 'axios';
 
@@ -52,7 +49,7 @@ const UtentiAdmin: React.FC = () => {
   const [filtroRuolo, setFiltroRuolo] = useState('TUTTI');
   const [filtroStato, setFiltroStato] = useState('TUTTI');
 
-  // Modals
+  // Modal
   const [utenteSelezionato, setUtenteSelezionato] = useState<Utente | null>(null);
   const [isDettaglioOpen, setIsDettaglioOpen] = useState(false);
   const [isModificaRuoliOpen, setIsModificaRuoliOpen] = useState(false);
@@ -65,7 +62,7 @@ const UtentiAdmin: React.FC = () => {
   });
 
   // Messaggi operazione
-  const [messaggioOperazione, setMessaggioOperazione] = useState<{ tipo: 'success' | 'danger'; testo: string } | null>(null);
+  const [messaggioOperazione, setMessaggioOperazione] = useState<{ tipo: string; testo: string } | null>(null);
   const [operazioneInCorso, setOperazioneInCorso] = useState(false);
 
   /** Carica la lista utenti dal backend */
@@ -82,6 +79,7 @@ const UtentiAdmin: React.FC = () => {
 
   useEffect(() => {
     if (keycloak.token) caricaUtenti();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keycloak.token]);
 
   /** Filtra gli utenti per ruolo e stato */
@@ -167,230 +165,314 @@ const UtentiAdmin: React.FC = () => {
   };
 
   return (
-    <PageSection>
-      <Title headingLevel="h1" size="xl" style={{ marginBottom: '1rem' }}>
-        Gestione Utenti
-      </Title>
+    <Container className="py-4">
+      <h1 className="h3 mb-4">Gestione Utenti</h1>
 
       {/* Messaggio operazione */}
       {messaggioOperazione && (
-        <Alert
-          variant={messaggioOperazione.tipo}
-          title={messaggioOperazione.testo}
-          isInline
-          actionClose={<Button variant="plain" onClick={() => setMessaggioOperazione(null)}>×</Button>}
-          style={{ marginBottom: '1rem' }}
-        />
-      )}
-
-      {/* Toolbar */}
-      <Toolbar style={{ marginBottom: '1rem' }}>
-        <ToolbarContent>
-          <ToolbarItem>
-            <FormSelect
-              value={filtroRuolo}
-              onChange={(_e, v) => setFiltroRuolo(v)}
-              aria-label="Filtra per ruolo"
-            >
-              <FormSelectOption value="TUTTI" label="TUTTI" />
-              {RUOLI_DISPONIBILI.map((r) => <FormSelectOption key={r} value={r} label={r} />)}
-            </FormSelect>
-          </ToolbarItem>
-          <ToolbarItem>
-            <FormSelect
-              value={filtroStato}
-              onChange={(_e, v) => setFiltroStato(v)}
-              aria-label="Filtra per stato"
-            >
-              {STATI_UTENTE.map((s) => <FormSelectOption key={s} value={s} label={s} />)}
-            </FormSelect>
-          </ToolbarItem>
-          <ToolbarItem>
-            <Button variant="primary" onClick={() => setIsNuovoUtenteOpen(true)}>
-              + Nuovo Utente
-            </Button>
-          </ToolbarItem>
-        </ToolbarContent>
-      </Toolbar>
-
-      {/* Stato caricamento o errore */}
-      {caricamento && <Spinner aria-label="Caricamento utenti" size="xl" />}
-      {errore && (
-        <Alert variant="danger" title="Errore caricamento utenti" isInline>
-          {errore}
+        <Alert color={messaggioOperazione.tipo} className="mb-3" isOpen toggle={() => setMessaggioOperazione(null)}>
+          {messaggioOperazione.testo}
         </Alert>
       )}
 
+      {/* Barra filtri */}
+      <div className="d-flex gap-2 align-items-end mb-3 flex-wrap">
+        <div>
+          <Label for="filtroRuolo">Ruolo</Label>
+          <Input
+            id="filtroRuolo"
+            type="select"
+            value={filtroRuolo}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroRuolo(e.target.value)}
+            aria-label="Filtra per ruolo"
+            noWrapper
+          >
+            <option value="TUTTI">TUTTI</option>
+            {RUOLI_DISPONIBILI.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </Input>
+        </div>
+        <div>
+          <Label for="filtroStatoU">Stato</Label>
+          <Input
+            id="filtroStatoU"
+            type="select"
+            value={filtroStato}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroStato(e.target.value)}
+            aria-label="Filtra per stato"
+            noWrapper
+          >
+            {STATI_UTENTE.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </Input>
+        </div>
+        <Button color="primary" onClick={() => setIsNuovoUtenteOpen(true)}>
+          + Nuovo Utente
+        </Button>
+      </div>
+
+      {caricamento && (
+        <div className="text-center py-4">
+          <Spinner active label="Caricamento utenti..." />
+        </div>
+      )}
+
+      {errore && <Alert color="danger">{errore}</Alert>}
+
       {/* Tabella utenti */}
       {!caricamento && !errore && (
-        <Table aria-label="Lista utenti">
-          <Thead>
-            <Tr>
-              <Th>Username</Th>
-              <Th>Nome</Th>
-              <Th>Email</Th>
-              <Th>Ruoli</Th>
-              <Th>Stato</Th>
-              <Th>Ultimo Accesso</Th>
-              <Th>Azioni</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
+        <Table responsive hover striped aria-label="Lista utenti">
+          <thead>
+            <tr>
+              <th scope="col">Username</th>
+              <th scope="col">Nome</th>
+              <th scope="col">Email</th>
+              <th scope="col">Ruoli</th>
+              <th scope="col">Stato</th>
+              <th scope="col">Ultimo Accesso</th>
+              <th scope="col">Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
             {utentiFiltrati.length === 0 ? (
-              <Tr><Td colSpan={7}>Nessun utente trovato</Td></Tr>
+              <tr>
+                <td colSpan={7} className="text-center text-muted py-3">Nessun utente trovato</td>
+              </tr>
             ) : (
               utentiFiltrati.map((u) => (
-                <Tr key={u.id}>
-                  <Td>{u.username}</Td>
-                  <Td>{`${u.nome} ${u.cognome}`.trim()}</Td>
-                  <Td>{u.email}</Td>
-                  <Td>
+                <tr key={u.id}>
+                  <td>{u.username}</td>
+                  <td>{`${u.nome} ${u.cognome}`.trim()}</td>
+                  <td>{u.email}</td>
+                  <td>
                     {u.ruoli?.map((r) => (
-                      <span
-                        key={r}
-                        style={{ backgroundColor: '#06c', color: '#fff', padding: '1px 6px', borderRadius: '10px', marginRight: '4px', fontSize: '0.75rem' }}
-                      >
+                      <Badge key={r} color="primary" pill className="me-1">
                         {r}
-                      </span>
+                      </Badge>
                     ))}
-                  </Td>
-                  <Td>
-                    <span style={{ color: u.abilitato ? '#3e8635' : '#c9190b', fontWeight: 'bold' }}>
+                  </td>
+                  <td>
+                    <Badge color={u.abilitato ? 'success' : 'danger'} pill>
                       {u.abilitato ? 'Attivo' : 'Disabilitato'}
-                    </span>
-                  </Td>
-                  <Td>{u.ultimoAccesso ? new Date(u.ultimoAccesso).toLocaleDateString('it-IT') : '-'}</Td>
-                  <Td>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <Button variant="secondary" size="sm" onClick={() => { setUtenteSelezionato(u); setIsDettaglioOpen(true); }}>
+                    </Badge>
+                  </td>
+                  <td>
+                    {u.ultimoAccesso
+                      ? new Date(u.ultimoAccesso).toLocaleDateString('it-IT')
+                      : '-'}
+                  </td>
+                  <td>
+                    <div className="d-flex gap-1 flex-wrap">
+                      <Button
+                        color="secondary"
+                        size="sm"
+                        outline
+                        onClick={() => { setUtenteSelezionato(u); setIsDettaglioOpen(true); }}
+                      >
                         Dettaglio
                       </Button>
                       <Button
-                        variant="secondary"
+                        color="secondary"
                         size="sm"
-                        onClick={() => { setUtenteSelezionato(u); setRuoliSelezionati(u.ruoli ?? []); setIsModificaRuoliOpen(true); }}
+                        outline
+                        onClick={() => {
+                          setUtenteSelezionato(u);
+                          setRuoliSelezionati(u.ruoli ?? []);
+                          setIsModificaRuoliOpen(true);
+                        }}
                       >
                         Modifica Ruoli
                       </Button>
                       <Button
-                        variant={u.abilitato ? 'warning' : 'primary'}
+                        color={u.abilitato ? 'warning' : 'success'}
                         size="sm"
-                        isDisabled={operazioneInCorso}
+                        disabled={operazioneInCorso}
                         onClick={() => toggleAbilitazione(u)}
                       >
                         {u.abilitato ? 'Disabilita' : 'Abilita'}
                       </Button>
                       <Button
-                        variant="link"
+                        color="secondary"
                         size="sm"
-                        isDisabled={operazioneInCorso}
+                        outline
+                        disabled={operazioneInCorso}
                         onClick={() => resetPassword(u)}
                       >
-                        Reset Password
+                        Reset Pwd
                       </Button>
                     </div>
-                  </Td>
-                </Tr>
+                  </td>
+                </tr>
               ))
             )}
-          </Tbody>
+          </tbody>
         </Table>
       )}
 
       {/* Modal dettaglio utente */}
       <Modal
-        variant={ModalVariant.medium}
-        title={`Dettaglio Utente: ${utenteSelezionato?.username}`}
         isOpen={isDettaglioOpen}
-        onClose={() => setIsDettaglioOpen(false)}
-        actions={[
-          <Button key="chiudi" variant="primary" onClick={() => setIsDettaglioOpen(false)}>Chiudi</Button>,
-        ]}
+        toggle={() => setIsDettaglioOpen(false)}
+        labelledBy="modal-dettaglio-utente-title"
+        size="lg"
       >
-        {utenteSelezionato && (
-          <dl style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem 1rem' }}>
-            <dt><strong>ID:</strong></dt><dd>{utenteSelezionato.id}</dd>
-            <dt><strong>Username:</strong></dt><dd>{utenteSelezionato.username}</dd>
-            <dt><strong>Nome:</strong></dt><dd>{utenteSelezionato.nome}</dd>
-            <dt><strong>Cognome:</strong></dt><dd>{utenteSelezionato.cognome}</dd>
-            <dt><strong>Email:</strong></dt><dd>{utenteSelezionato.email}</dd>
-            <dt><strong>Ruoli:</strong></dt><dd>{utenteSelezionato.ruoli?.join(', ')}</dd>
-            <dt><strong>Stato:</strong></dt><dd>{utenteSelezionato.abilitato ? 'Attivo' : 'Disabilitato'}</dd>
-            <dt><strong>Ultimo Accesso:</strong></dt>
-            <dd>{utenteSelezionato.ultimoAccesso ? new Date(utenteSelezionato.ultimoAccesso).toLocaleString('it-IT') : '-'}</dd>
-          </dl>
-        )}
+        <ModalHeader toggle={() => setIsDettaglioOpen(false)} id="modal-dettaglio-utente-title">
+          Dettaglio Utente: {utenteSelezionato?.username}
+        </ModalHeader>
+        <ModalBody>
+          {utenteSelezionato && (
+            <dl className="row">
+              <dt className="col-sm-4">ID:</dt>
+              <dd className="col-sm-8">{utenteSelezionato.id}</dd>
+              <dt className="col-sm-4">Username:</dt>
+              <dd className="col-sm-8">{utenteSelezionato.username}</dd>
+              <dt className="col-sm-4">Nome:</dt>
+              <dd className="col-sm-8">{utenteSelezionato.nome}</dd>
+              <dt className="col-sm-4">Cognome:</dt>
+              <dd className="col-sm-8">{utenteSelezionato.cognome}</dd>
+              <dt className="col-sm-4">Email:</dt>
+              <dd className="col-sm-8">{utenteSelezionato.email}</dd>
+              <dt className="col-sm-4">Ruoli:</dt>
+              <dd className="col-sm-8">{utenteSelezionato.ruoli?.join(', ')}</dd>
+              <dt className="col-sm-4">Stato:</dt>
+              <dd className="col-sm-8">{utenteSelezionato.abilitato ? 'Attivo' : 'Disabilitato'}</dd>
+              <dt className="col-sm-4">Ultimo Accesso:</dt>
+              <dd className="col-sm-8">
+                {utenteSelezionato.ultimoAccesso
+                  ? new Date(utenteSelezionato.ultimoAccesso).toLocaleString('it-IT')
+                  : '-'}
+              </dd>
+            </dl>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={() => setIsDettaglioOpen(false)}>Chiudi</Button>
+        </ModalFooter>
       </Modal>
 
       {/* Modal modifica ruoli */}
       <Modal
-        variant={ModalVariant.small}
-        title={`Modifica Ruoli: ${utenteSelezionato?.username}`}
         isOpen={isModificaRuoliOpen}
-        onClose={() => setIsModificaRuoliOpen(false)}
-        actions={[
-          <Button key="salva" variant="primary" isDisabled={operazioneInCorso} onClick={salvaRuoli}>
-            Salva
-          </Button>,
-          <Button key="annulla" variant="link" onClick={() => setIsModificaRuoliOpen(false)}>Annulla</Button>,
-        ]}
+        toggle={() => setIsModificaRuoliOpen(false)}
+        labelledBy="modal-modifica-ruoli-title"
+        size="sm"
       >
-        <p>Seleziona i ruoli per l'utente <strong>{utenteSelezionato?.username}</strong>:</p>
-        {RUOLI_DISPONIBILI.map((r) => (
-          <div key={r} style={{ marginBottom: '0.5rem' }}>
-            <Checkbox
-              id={`ruolo-${r}`}
-              label={r}
-              isChecked={ruoliSelezionati.includes(r)}
-              onChange={(_e, checked) => {
-                setRuoliSelezionati(
-                  checked
-                    ? [...ruoliSelezionati, r]
-                    : ruoliSelezionati.filter((x) => x !== r)
-                );
-              }}
-            />
-          </div>
-        ))}
+        <ModalHeader toggle={() => setIsModificaRuoliOpen(false)} id="modal-modifica-ruoli-title">
+          Modifica Ruoli: {utenteSelezionato?.username}
+        </ModalHeader>
+        <ModalBody>
+          <p>Seleziona i ruoli per l'utente <strong>{utenteSelezionato?.username}</strong>:</p>
+          {RUOLI_DISPONIBILI.map((r) => (
+            <FormGroup check key={r}>
+              <Input
+                id={`ruolo-${r}`}
+                type="checkbox"
+                checked={ruoliSelezionati.includes(r)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setRuoliSelezionati(
+                    e.target.checked
+                      ? [...ruoliSelezionati, r]
+                      : ruoliSelezionati.filter((x) => x !== r)
+                  );
+                }}
+                noWrapper
+              />
+              <Label check for={`ruolo-${r}`}>{r}</Label>
+            </FormGroup>
+          ))}
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" disabled={operazioneInCorso} onClick={salvaRuoli}>
+            Salva
+          </Button>
+          <Button color="secondary" outline onClick={() => setIsModificaRuoliOpen(false)}>
+            Annulla
+          </Button>
+        </ModalFooter>
       </Modal>
 
       {/* Modal nuovo utente */}
       <Modal
-        variant={ModalVariant.medium}
-        title="Nuovo Utente"
         isOpen={isNuovoUtenteOpen}
-        onClose={() => setIsNuovoUtenteOpen(false)}
-        actions={[
-          <Button key="crea" variant="primary" isDisabled={operazioneInCorso} onClick={creaNuovoUtente}>
-            Crea
-          </Button>,
-          <Button key="annulla" variant="link" onClick={() => setIsNuovoUtenteOpen(false)}>Annulla</Button>,
-        ]}
+        toggle={() => setIsNuovoUtenteOpen(false)}
+        labelledBy="modal-nuovo-utente-title"
+        size="lg"
       >
-        <FormGroup label="Username" isRequired fieldId="nu-username">
-          <TextInput id="nu-username" value={nuovoUtente.username} onChange={(_e, v) => setNuovoUtente({ ...nuovoUtente, username: v })} />
-        </FormGroup>
-        <FormGroup label="Nome" isRequired fieldId="nu-nome">
-          <TextInput id="nu-nome" value={nuovoUtente.nome} onChange={(_e, v) => setNuovoUtente({ ...nuovoUtente, nome: v })} />
-        </FormGroup>
-        <FormGroup label="Cognome" isRequired fieldId="nu-cognome">
-          <TextInput id="nu-cognome" value={nuovoUtente.cognome} onChange={(_e, v) => setNuovoUtente({ ...nuovoUtente, cognome: v })} />
-        </FormGroup>
-        <FormGroup label="Email" isRequired fieldId="nu-email">
-          <TextInput id="nu-email" type="email" value={nuovoUtente.email} onChange={(_e, v) => setNuovoUtente({ ...nuovoUtente, email: v })} />
-        </FormGroup>
-        <FormGroup label="Ruolo iniziale" isRequired fieldId="nu-ruolo">
-          <FormSelect
-            id="nu-ruolo"
-            value={nuovoUtente.ruolo}
-            onChange={(_e, v) => setNuovoUtente({ ...nuovoUtente, ruolo: v })}
-            aria-label="Ruolo iniziale"
-          >
-            {RUOLI_DISPONIBILI.map((r) => <FormSelectOption key={r} value={r} label={r} />)}
-          </FormSelect>
-        </FormGroup>
+        <ModalHeader toggle={() => setIsNuovoUtenteOpen(false)} id="modal-nuovo-utente-title">
+          Nuovo Utente
+        </ModalHeader>
+        <ModalBody>
+          <FormGroup>
+            <Input
+              id="nuUsername"
+              label="Username *"
+              value={nuovoUtente.username}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNuovoUtente({ ...nuovoUtente, username: e.target.value })
+              }
+            />
+          </FormGroup>
+          <FormGroup>
+            <Input
+              id="nuNome"
+              label="Nome *"
+              value={nuovoUtente.nome}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNuovoUtente({ ...nuovoUtente, nome: e.target.value })
+              }
+            />
+          </FormGroup>
+          <FormGroup>
+            <Input
+              id="nuCognome"
+              label="Cognome *"
+              value={nuovoUtente.cognome}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNuovoUtente({ ...nuovoUtente, cognome: e.target.value })
+              }
+            />
+          </FormGroup>
+          <FormGroup>
+            <Input
+              id="nuEmail"
+              type="email"
+              label="Email *"
+              value={nuovoUtente.email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNuovoUtente({ ...nuovoUtente, email: e.target.value })
+              }
+            />
+          </FormGroup>
+          <div>
+            <Label for="nuRuolo">Ruolo iniziale *</Label>
+            <Input
+              id="nuRuolo"
+              type="select"
+              value={nuovoUtente.ruolo}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNuovoUtente({ ...nuovoUtente, ruolo: e.target.value })
+              }
+              aria-label="Ruolo iniziale"
+              noWrapper
+            >
+              {RUOLI_DISPONIBILI.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </Input>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" disabled={operazioneInCorso} onClick={creaNuovoUtente}>
+            Crea
+          </Button>
+          <Button color="secondary" outline onClick={() => setIsNuovoUtenteOpen(false)}>
+            Annulla
+          </Button>
+        </ModalFooter>
       </Modal>
-    </PageSection>
+    </Container>
   );
 };
 

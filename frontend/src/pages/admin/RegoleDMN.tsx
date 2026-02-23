@@ -5,15 +5,16 @@ import {
   Card,
   CardBody,
   CardTitle,
-  Grid,
-  GridItem,
+  Col,
+  Container,
   Modal,
-  ModalVariant,
-  PageSection,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Row,
   Spinner,
-  Title,
-} from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+  Table,
+} from 'design-react-kit';
 import { useKeycloak } from '@react-keycloak/web';
 import axios from 'axios';
 
@@ -54,8 +55,9 @@ const RegoleDMN: React.FC = () => {
         headers: { Authorization: `Bearer ${keycloak.token}` },
       })
       .then((res) => setDecisioni(res.data ?? []))
-      .catch(() => {
+      .catch((err) => {
         // Dati di fallback per visualizzare la regola verifica-competenza.dmn
+        setErrore(err.message ?? 'Errore caricamento');
         setDecisioni([
           {
             id: 'verifica-competenza',
@@ -63,7 +65,7 @@ const RegoleDMN: React.FC = () => {
             versione: '1.0',
             numeroRegole: 3,
             ultimaModifica: new Date().toISOString(),
-            descrizione: 'Verifica la competenza del dirigente in base al livello e all\'importo della determinazione',
+            descrizione: "Verifica la competenza del dirigente in base al livello e all'importo della determinazione",
             inputs: ['Livello Dirigente', 'Importo'],
             outputs: ['Competente', 'Motivazione'],
             regole: [
@@ -78,117 +80,140 @@ const RegoleDMN: React.FC = () => {
   }, [keycloak.token]);
 
   return (
-    <PageSection>
-      <Title headingLevel="h1" size="xl" style={{ marginBottom: '1rem' }}>
-        Regole DMN
-      </Title>
+    <Container className="py-4">
+      <h1 className="h3 mb-4">Regole DMN</h1>
 
-      {caricamento && <Spinner aria-label="Caricamento regole DMN" size="xl" />}
+      {caricamento && (
+        <div className="text-center py-4">
+          <Spinner active label="Caricamento regole DMN..." />
+        </div>
+      )}
+
       {errore && (
-        <Alert variant="warning" title="Utilizzo dati di fallback" isInline style={{ marginBottom: '1rem' }}>
+        <Alert color="warning" className="mb-3">
           Impossibile caricare le regole dal motore: {errore}. Visualizzazione dati locali.
         </Alert>
       )}
 
       {!caricamento && (
         <>
-          <Grid hasGutter>
+          <Row>
             {decisioni.map((d) => (
-              <GridItem key={d.id} span={12}>
+              <Col key={d.id} xs={12} className="mb-3">
                 <Card>
-                  <CardTitle>
-                    📐 {d.nome}{' '}
-                    <span style={{ fontSize: '0.8rem', color: '#6a6e73', marginLeft: '8px' }}>
-                      v{d.versione}
-                    </span>
-                  </CardTitle>
                   <CardBody>
-                    {d.descrizione && <p style={{ marginBottom: '0.5rem', color: '#6a6e73' }}>{d.descrizione}</p>}
-                    <dl style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '0.25rem 1rem', marginBottom: '1rem' }}>
-                      <dt><strong>Numero Regole:</strong></dt><dd>{d.numeroRegole}</dd>
-                      <dt><strong>Ultima Modifica:</strong></dt>
-                      <dd>{d.ultimaModifica ? new Date(d.ultimaModifica).toLocaleDateString('it-IT') : '-'}</dd>
-                      {d.inputs && <><dt><strong>Input:</strong></dt><dd>{d.inputs.join(', ')}</dd></>}
-                      {d.outputs && <><dt><strong>Output:</strong></dt><dd>{d.outputs.join(', ')}</dd></>}
+                    <CardTitle tag="h2" className="h5">
+                      📐 {d.nome}{' '}
+                      <small className="text-muted">v{d.versione}</small>
+                    </CardTitle>
+                    {d.descrizione && (
+                      <p className="text-muted mb-3">{d.descrizione}</p>
+                    )}
+                    <dl className="row mb-3">
+                      <dt className="col-sm-3">Numero Regole:</dt>
+                      <dd className="col-sm-9">{d.numeroRegole}</dd>
+                      <dt className="col-sm-3">Ultima Modifica:</dt>
+                      <dd className="col-sm-9">
+                        {d.ultimaModifica
+                          ? new Date(d.ultimaModifica).toLocaleDateString('it-IT')
+                          : '-'}
+                      </dd>
+                      {d.inputs && (
+                        <>
+                          <dt className="col-sm-3">Input:</dt>
+                          <dd className="col-sm-9">{d.inputs.join(', ')}</dd>
+                        </>
+                      )}
+                      {d.outputs && (
+                        <>
+                          <dt className="col-sm-3">Output:</dt>
+                          <dd className="col-sm-9">{d.outputs.join(', ')}</dd>
+                        </>
+                      )}
                     </dl>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div className="d-flex gap-2">
                       <Button
-                        variant="secondary"
+                        color="secondary"
+                        outline
                         onClick={() => { setDecisioneSelezionata(d); setIsModalOpen(true); }}
                       >
-                        👁️ Visualizza
+                        👁 Visualizza
                       </Button>
-                      <Button
-                        variant="link"
-                        component="a"
+                      <a
                         href={KIE_SANDBOX_URL}
                         target="_blank"
                         rel="noreferrer"
+                        className="btn btn-outline-primary"
                       >
-                        ✏️ Apri in KIE Sandbox ↗
-                      </Button>
+                        ✏ Apri in KIE Sandbox ↗
+                      </a>
                     </div>
                   </CardBody>
                 </Card>
-              </GridItem>
+              </Col>
             ))}
-          </Grid>
+          </Row>
 
           {decisioni.length === 0 && (
-            <p style={{ color: '#6a6e73' }}>Nessuna regola DMN caricata nel motore.</p>
+            <p className="text-muted">Nessuna regola DMN caricata nel motore.</p>
           )}
         </>
       )}
 
       {/* Modal visualizzazione dettaglio DMN */}
       <Modal
-        variant={ModalVariant.large}
-        title={`DMN: ${decisioneSelezionata?.nome}`}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        actions={[
-          <Button key="chiudi" variant="primary" onClick={() => setIsModalOpen(false)}>
+        toggle={() => setIsModalOpen(false)}
+        labelledBy="modal-dmn-title"
+        size="lg"
+      >
+        <ModalHeader toggle={() => setIsModalOpen(false)} id="modal-dmn-title">
+          DMN: {decisioneSelezionata?.nome}
+        </ModalHeader>
+        <ModalBody>
+          {decisioneSelezionata && (
+            <>
+              {decisioneSelezionata.descrizione && (
+                <p className="mb-3">{decisioneSelezionata.descrizione}</p>
+              )}
+              {decisioneSelezionata.regole && decisioneSelezionata.regole.length > 0 && (
+                <Table responsive striped size="sm" aria-label="Regole DMN">
+                  <thead>
+                    <tr>
+                      {Object.keys(decisioneSelezionata.regole[0]).map((col) => (
+                        <th scope="col" key={col}>{col}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {decisioneSelezionata.regole.map((regola, idx) => (
+                      <tr key={idx}>
+                        {Object.values(regola).map((val, colIdx) => (
+                          <td key={colIdx}>{val}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
+            </>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={() => setIsModalOpen(false)}>
             Chiudi
-          </Button>,
-          <Button
-            key="apri"
-            variant="link"
-            component="a"
+          </Button>
+          <a
             href={KIE_SANDBOX_URL}
             target="_blank"
             rel="noreferrer"
+            className="btn btn-outline-secondary"
           >
             Apri in KIE Sandbox ↗
-          </Button>,
-        ]}
-      >
-        {decisioneSelezionata && (
-          <>
-            <p style={{ marginBottom: '1rem' }}>{decisioneSelezionata.descrizione}</p>
-            {decisioneSelezionata.regole && decisioneSelezionata.regole.length > 0 && (
-              <Table aria-label="Regole DMN" variant="compact">
-                <Thead>
-                  <Tr>
-                    {Object.keys(decisioneSelezionata.regole[0]).map((col) => (
-                      <Th key={col}>{col}</Th>
-                    ))}
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {decisioneSelezionata.regole.map((regola, idx) => (
-                    <Tr key={idx}>
-                      {Object.values(regola).map((val, colIdx) => (
-                        <Td key={colIdx}>{val}</Td>
-                      ))}
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            )}
-          </>
-        )}
+          </a>
+        </ModalFooter>
       </Modal>
-    </PageSection>
+    </Container>
   );
 };
 

@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Badge,
   Button,
+  Container,
   Modal,
-  ModalVariant,
-  PageSection,
-  Title,
-} from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Spinner,
+  Table,
+} from 'design-react-kit';
 import { useKeycloak } from '@react-keycloak/web';
 import axios from 'axios';
 
@@ -29,12 +32,14 @@ const TaskInbox: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskSelezionato, setTaskSelezionato] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [caricamento, setCaricamento] = useState(false);
 
   const ruoloUtente = keycloak.tokenParsed?.realm_access?.roles?.find(
     (r: string) => ['istruttore', 'ragioniere', 'dirigente', 'admin'].includes(r)
   );
 
   const caricaTask = () => {
+    setCaricamento(true);
     const safeRuolo = (ruoloUtente ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
     axios
       .get(`/q/graphql`, {
@@ -52,13 +57,15 @@ const TaskInbox: React.FC = () => {
           })
           .then((r) => setTasks(r.data ?? []))
           .catch(console.error);
-      });
+      })
+      .finally(() => setCaricamento(false));
   };
 
   useEffect(() => {
     if (keycloak.token && ruoloUtente) {
       caricaTask();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keycloak.token, ruoloUtente]);
 
   const completaTask = (task: Task) => {
@@ -76,72 +83,96 @@ const TaskInbox: React.FC = () => {
   };
 
   return (
-    <PageSection>
-      <Title headingLevel="h1" size="xl" style={{ marginBottom: '1rem' }}>
-        Task Inbox {ruoloUtente ? `(${ruoloUtente})` : ''}
-      </Title>
+    <Container className="py-4">
+      <h1 className="h3 mb-4">
+        Task Inbox{' '}
+        {ruoloUtente && (
+          <Badge color="primary" pill className="ms-2">
+            {ruoloUtente}
+          </Badge>
+        )}
+      </h1>
 
-      <Table aria-label="Lista task">
-        <Thead>
-          <Tr>
-            <Th>ID Task</Th>
-            <Th>Nome</Th>
-            <Th>Processo</Th>
-            <Th>Assegnato a</Th>
-            <Th>Azioni</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {tasks.length === 0 ? (
-            <Tr>
-              <Td colSpan={5}>Nessun task disponibile</Td>
-            </Tr>
-          ) : (
-            tasks.map((t) => (
-              <Tr key={t.id}>
-                <Td>{t.id}</Td>
-                <Td>{t.name}</Td>
-                <Td>{t.processInstanceId}</Td>
-                <Td>{t.actualOwner ?? '-'}</Td>
-                <Td>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      setTaskSelezionato(t);
-                      setIsModalOpen(true);
-                    }}
-                  >
-                    Completa
-                  </Button>
-                </Td>
-              </Tr>
-            ))
-          )}
-        </Tbody>
-      </Table>
+      {caricamento && (
+        <div className="text-center py-4">
+          <Spinner active label="Caricamento task..." />
+        </div>
+      )}
 
+      {!caricamento && (
+        <Table responsive hover striped aria-label="Lista task">
+          <thead>
+            <tr>
+              <th scope="col">ID Task</th>
+              <th scope="col">Nome</th>
+              <th scope="col">Processo</th>
+              <th scope="col">Assegnato a</th>
+              <th scope="col">Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center text-muted py-3">
+                  Nessun task disponibile
+                </td>
+              </tr>
+            ) : (
+              tasks.map((t) => (
+                <tr key={t.id}>
+                  <td>{t.id}</td>
+                  <td>{t.name}</td>
+                  <td>{t.processInstanceId}</td>
+                  <td>{t.actualOwner ?? '-'}</td>
+                  <td>
+                    <Button
+                      color="primary"
+                      size="sm"
+                      onClick={() => {
+                        setTaskSelezionato(t);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      Completa
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </Table>
+      )}
+
+      {/* Modal conferma completamento task */}
       <Modal
-        variant={ModalVariant.small}
-        title={`Completa Task: ${taskSelezionato?.name}`}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        actions={[
+        toggle={() => setIsModalOpen(false)}
+        labelledBy="modal-task-title"
+        size="sm"
+      >
+        <ModalHeader toggle={() => setIsModalOpen(false)} id="modal-task-title">
+          Completa Task: {taskSelezionato?.name}
+        </ModalHeader>
+        <ModalBody>
+          <p>
+            Sei sicuro di voler completare il task{' '}
+            <strong>{taskSelezionato?.name}</strong>?
+          </p>
+          <p>Processo: {taskSelezionato?.processInstanceId}</p>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            key="completa"
-            variant="primary"
+            color="primary"
             onClick={() => taskSelezionato && completaTask(taskSelezionato)}
           >
             Conferma Completamento
-          </Button>,
-          <Button key="annulla" variant="link" onClick={() => setIsModalOpen(false)}>
+          </Button>
+          <Button color="secondary" outline onClick={() => setIsModalOpen(false)}>
             Annulla
-          </Button>,
-        ]}
-      >
-        <p>Sei sicuro di voler completare il task <strong>{taskSelezionato?.name}</strong>?</p>
-        <p>Processo: {taskSelezionato?.processInstanceId}</p>
+          </Button>
+        </ModalFooter>
       </Modal>
-    </PageSection>
+    </Container>
   );
 };
 
