@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                   xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                   xmlns:drools="http://www.jboss.org/drools"
+                   id="Definitions_1"
+                   targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                   exporter="KIE Sandbox"
+                   exporterVersion="1.0">
+
+  <bpmn2:itemDefinition id="ItemDefinition_oggetto" structureRef="java.lang.String"/>
+  <bpmn2:itemDefinition id="ItemDefinition_importo" structureRef="java.lang.Double"/>
+  <bpmn2:itemDefinition id="ItemDefinition_centroSpesa" structureRef="java.lang.String"/>
+  <bpmn2:itemDefinition id="ItemDefinition_dirigente" structureRef="java.lang.String"/>
+  <bpmn2:itemDefinition id="ItemDefinition_livelloDirigente" structureRef="java.lang.String"/>
+  <bpmn2:itemDefinition id="ItemDefinition_competente" structureRef="java.lang.Boolean"/>
+
+  <bpmn2:process id="determinazione-dirigenziale"
+                 name="Determinazione Dirigenziale"
+                 isExecutable="true"
+                 processType="Public">
+
+    <!-- Variabili di processo -->
+    <bpmn2:property id="oggetto" name="oggetto" itemSubjectRef="ItemDefinition_oggetto"/>
+    <bpmn2:property id="importo" name="importo" itemSubjectRef="ItemDefinition_importo"/>
+    <bpmn2:property id="centroSpesa" name="centroSpesa" itemSubjectRef="ItemDefinition_centroSpesa"/>
+    <bpmn2:property id="dirigente" name="dirigente" itemSubjectRef="ItemDefinition_dirigente"/>
+    <bpmn2:property id="livelloDirigente" name="livelloDirigente" itemSubjectRef="ItemDefinition_livelloDirigente"/>
+    <bpmn2:property id="competente" name="competente" itemSubjectRef="ItemDefinition_competente"/>
+
+    <!-- Start Event -->
+    <bpmn2:startEvent id="StartEvent_1" name="Richiesta Determinazione">
+      <bpmn2:outgoing>SequenceFlow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+
+    <!-- User Task: Istruttoria -->
+    <bpmn2:userTask id="UserTask_Istruttoria" name="Istruttoria Atto">
+      <bpmn2:extensionElements>
+        <drools:taskName>Istruttoria Atto</drools:taskName>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_1</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_2</bpmn2:outgoing>
+      <bpmn2:potentialOwner>
+        <bpmn2:resourceAssignmentExpression>
+          <bpmn2:formalExpression>istruttore</bpmn2:formalExpression>
+        </bpmn2:resourceAssignmentExpression>
+      </bpmn2:potentialOwner>
+    </bpmn2:userTask>
+
+    <!-- Business Rule Task: Verifica Competenza -->
+    <bpmn2:businessRuleTask id="BusinessRuleTask_Competenza" name="Verifica Competenza">
+      <bpmn2:extensionElements>
+        <drools:ruleFlowGroup>verifica-competenza</drools:ruleFlowGroup>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_2</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_3</bpmn2:outgoing>
+    </bpmn2:businessRuleTask>
+
+    <!-- Gateway: Competente? -->
+    <bpmn2:exclusiveGateway id="Gateway_Competente" name="Competente?" gatewayDirection="Diverging">
+      <bpmn2:incoming>SequenceFlow_3</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_Si</bpmn2:outgoing>
+      <bpmn2:outgoing>SequenceFlow_No</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+
+    <!-- User Task: Visto Contabile -->
+    <bpmn2:userTask id="UserTask_VistoContabile" name="Visto di Regolarità Contabile">
+      <bpmn2:extensionElements>
+        <drools:taskName>Visto di Regolarità Contabile</drools:taskName>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_Si</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_4</bpmn2:outgoing>
+      <bpmn2:potentialOwner>
+        <bpmn2:resourceAssignmentExpression>
+          <bpmn2:formalExpression>ragioniere</bpmn2:formalExpression>
+        </bpmn2:resourceAssignmentExpression>
+      </bpmn2:potentialOwner>
+    </bpmn2:userTask>
+
+    <!-- User Task: Firma Dirigente -->
+    <bpmn2:userTask id="UserTask_Firma" name="Firma Dirigente">
+      <bpmn2:extensionElements>
+        <drools:taskName>Firma Dirigente</drools:taskName>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_4</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_5</bpmn2:outgoing>
+      <bpmn2:potentialOwner>
+        <bpmn2:resourceAssignmentExpression>
+          <bpmn2:formalExpression>dirigente</bpmn2:formalExpression>
+        </bpmn2:resourceAssignmentExpression>
+      </bpmn2:potentialOwner>
+    </bpmn2:userTask>
+
+    <!-- Script Task: Pubblicazione -->
+    <bpmn2:scriptTask id="ScriptTask_Pubblicazione" name="Pubblicazione Albo Pretorio" scriptFormat="java">
+      <bpmn2:incoming>SequenceFlow_5</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_6</bpmn2:outgoing>
+      <bpmn2:script>System.out.println("[ALBO PRETORIO] Pubblicazione determinazione: " + oggetto + " - Importo: " + importo);</bpmn2:script>
+    </bpmn2:scriptTask>
+
+    <!-- End Event: Pubblicata -->
+    <bpmn2:endEvent id="EndEvent_Pubblicata" name="Determinazione Pubblicata">
+      <bpmn2:incoming>SequenceFlow_6</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+    <!-- End Event: Rifiutata -->
+    <bpmn2:endEvent id="EndEvent_Rifiutata" name="Atto Rifiutato per Incompetenza">
+      <bpmn2:incoming>SequenceFlow_No</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+    <!-- Sequence Flows -->
+    <bpmn2:sequenceFlow id="SequenceFlow_1" sourceRef="StartEvent_1" targetRef="UserTask_Istruttoria"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_2" sourceRef="UserTask_Istruttoria" targetRef="BusinessRuleTask_Competenza"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_3" sourceRef="BusinessRuleTask_Competenza" targetRef="Gateway_Competente"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_Si" name="Sì" sourceRef="Gateway_Competente" targetRef="UserTask_VistoContabile">
+      <bpmn2:conditionExpression>return competente == true;</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="SequenceFlow_No" name="No" sourceRef="Gateway_Competente" targetRef="EndEvent_Rifiutata">
+      <bpmn2:conditionExpression>return competente == false;</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="SequenceFlow_4" sourceRef="UserTask_VistoContabile" targetRef="UserTask_Firma"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_5" sourceRef="UserTask_Firma" targetRef="ScriptTask_Pubblicazione"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_6" sourceRef="ScriptTask_Pubblicazione" targetRef="EndEvent_Pubblicata"/>
+  </bpmn2:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="determinazione-dirigenziale">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="182" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_Istruttoria_di" bpmnElement="UserTask_Istruttoria">
+        <dc:Bounds x="240" y="160" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BusinessRuleTask_Competenza_di" bpmnElement="BusinessRuleTask_Competenza">
+        <dc:Bounds x="390" y="160" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Competente_di" bpmnElement="Gateway_Competente" isMarkerVisible="true">
+        <dc:Bounds x="545" y="175" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_VistoContabile_di" bpmnElement="UserTask_VistoContabile">
+        <dc:Bounds x="650" y="160" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_Firma_di" bpmnElement="UserTask_Firma">
+        <dc:Bounds x="800" y="160" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_Pubblicazione_di" bpmnElement="ScriptTask_Pubblicazione">
+        <dc:Bounds x="950" y="160" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Pubblicata_di" bpmnElement="EndEvent_Pubblicata">
+        <dc:Bounds x="1102" y="182" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Rifiutata_di" bpmnElement="EndEvent_Rifiutata">
+        <dc:Bounds x="562" y="302" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

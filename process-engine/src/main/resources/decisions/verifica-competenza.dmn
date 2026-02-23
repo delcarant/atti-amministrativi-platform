@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             id="verifica-competenza"
+             name="Verifica Competenza Dirigenziale"
+             namespace="https://atti-amministrativi.gov.it/decisions">
+
+  <decision id="Decision_VerificaCompetenza" name="VerificaCompetenza">
+    <variable id="InformationItem_1" name="VerificaCompetenza" typeRef="Any"/>
+    <informationRequirement id="InformationRequirement_importo">
+      <requiredInput href="#InputData_importo"/>
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_livello">
+      <requiredInput href="#InputData_livelloDirigente"/>
+    </informationRequirement>
+    <decisionTable id="DecisionTable_1" hitPolicy="FIRST">
+      <input id="Input_livelloDirigente" label="livelloDirigente">
+        <inputExpression id="InputExpression_livello" typeRef="string">
+          <text>livelloDirigente</text>
+        </inputExpression>
+      </input>
+      <input id="Input_importo" label="importo">
+        <inputExpression id="InputExpression_importo" typeRef="number">
+          <text>importo</text>
+        </inputExpression>
+      </input>
+      <output id="Output_competente" label="competente" name="competente" typeRef="boolean"/>
+      <output id="Output_motivazione" label="motivazione" name="motivazione" typeRef="string"/>
+      <!-- Regola 1: D1 importo <= 5000 -->
+      <rule id="Rule_D1_ok">
+        <inputEntry id="InputEntry_D1_ok_livello"><text>"D1"</text></inputEntry>
+        <inputEntry id="InputEntry_D1_ok_importo"><text>&lt;= 5000</text></inputEntry>
+        <outputEntry id="OutputEntry_D1_ok_comp"><text>true</text></outputEntry>
+        <outputEntry id="OutputEntry_D1_ok_mot"><text>"Competenza D1: fino a 5.000 euro"</text></outputEntry>
+      </rule>
+      <!-- Regola 2: D1 importo > 5000 -->
+      <rule id="Rule_D1_ko">
+        <inputEntry id="InputEntry_D1_ko_livello"><text>"D1"</text></inputEntry>
+        <inputEntry id="InputEntry_D1_ko_importo"><text>&gt; 5000</text></inputEntry>
+        <outputEntry id="OutputEntry_D1_ko_comp"><text>false</text></outputEntry>
+        <outputEntry id="OutputEntry_D1_ko_mot"><text>"Importo supera limite D1 (5.000 euro)"</text></outputEntry>
+      </rule>
+      <!-- Regola 3: D2 importo <= 50000 -->
+      <rule id="Rule_D2_ok">
+        <inputEntry id="InputEntry_D2_ok_livello"><text>"D2"</text></inputEntry>
+        <inputEntry id="InputEntry_D2_ok_importo"><text>&lt;= 50000</text></inputEntry>
+        <outputEntry id="OutputEntry_D2_ok_comp"><text>true</text></outputEntry>
+        <outputEntry id="OutputEntry_D2_ok_mot"><text>"Competenza D2: fino a 50.000 euro"</text></outputEntry>
+      </rule>
+      <!-- Regola 4: D2 importo > 50000 -->
+      <rule id="Rule_D2_ko">
+        <inputEntry id="InputEntry_D2_ko_livello"><text>"D2"</text></inputEntry>
+        <inputEntry id="InputEntry_D2_ko_importo"><text>&gt; 50000</text></inputEntry>
+        <outputEntry id="OutputEntry_D2_ko_comp"><text>false</text></outputEntry>
+        <outputEntry id="OutputEntry_D2_ko_mot"><text>"Importo supera limite D2 (50.000 euro)"</text></outputEntry>
+      </rule>
+      <!-- Regola 5: D3 sempre competente -->
+      <rule id="Rule_D3_ok">
+        <inputEntry id="InputEntry_D3_ok_livello"><text>"D3"</text></inputEntry>
+        <inputEntry id="InputEntry_D3_ok_importo"><text>-</text></inputEntry>
+        <outputEntry id="OutputEntry_D3_ok_comp"><text>true</text></outputEntry>
+        <outputEntry id="OutputEntry_D3_ok_mot"><text>"Competenza D3: nessun limite di importo"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+
+  <inputData id="InputData_importo" name="importo">
+    <variable id="InputDataVariable_importo" name="importo" typeRef="number"/>
+  </inputData>
+
+  <inputData id="InputData_livelloDirigente" name="livelloDirigente">
+    <variable id="InputDataVariable_livello" name="livelloDirigente" typeRef="string"/>
+  </inputData>
+
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_1">
+      <dmndi:DMNShape id="DMNShape_Decision" dmnElementRef="Decision_VerificaCompetenza">
+        <dc:Bounds height="80" width="180" x="300" y="200"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_importo" dmnElementRef="InputData_importo">
+        <dc:Bounds height="45" width="125" x="150" y="330"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_livello" dmnElementRef="InputData_livelloDirigente">
+        <dc:Bounds height="45" width="125" x="450" y="330"/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

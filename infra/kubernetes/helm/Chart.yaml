@@ -1,0 +1,15 @@
+apiVersion: v2
+name: atti-amministrativi-platform
+description: Piattaforma open source per la gestione di atti amministrativi (determinazioni dirigenziali)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - atti-amministrativi
+  - pubblica-amministrazione
+  - kogito
+  - quarkus
+  - keycloak
+maintainers:
+  - name: Team Atti Amministrativi
+    email: devops@comune.it

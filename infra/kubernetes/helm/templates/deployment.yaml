@@ -1,0 +1,88 @@
+# Deployment del Process Engine
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-process-engine
+  labels:
+    app: process-engine
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.processEngine.replicaCount }}
+  selector:
+    matchLabels:
+      app: process-engine
+  template:
+    metadata:
+      labels:
+        app: process-engine
+    spec:
+      containers:
+        - name: process-engine
+          image: "{{ .Values.processEngine.image.repository }}:{{ .Values.processEngine.image.tag }}"
+          imagePullPolicy: {{ .Values.processEngine.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_USER
+              value: {{ .Values.processEngine.env.DB_USER | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: db-password
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: oidc-secret
+          resources:
+            requests:
+              memory: {{ .Values.processEngine.resources.requests.memory }}
+              cpu: {{ .Values.processEngine.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.processEngine.resources.limits.memory }}
+              cpu: {{ .Values.processEngine.resources.limits.cpu }}
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+---
+# Deployment del Frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-frontend
+  labels:
+    app: frontend
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
