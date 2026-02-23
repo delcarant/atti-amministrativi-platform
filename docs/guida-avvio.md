@@ -435,3 +435,110 @@ docker compose exec postgres psql -U kogito -d atti_amministrativi
 | 🔐 Documentazione Keycloak | https://www.keycloak.org/documentation |
 | ✏️ KIE Sandbox (online) | https://sandbox.kie.org |
 | 🐳 Docker Compose Reference | https://docs.docker.com/compose/ |
+
+---
+
+## ⚙️ Console di Amministrazione
+
+La Console di Amministrazione è accessibile solo agli utenti con ruolo **`admin`**.
+
+### Come Accedere
+
+1. Vai su **http://localhost:3000**
+2. Accedi con `admin` / `Password1!`
+3. Nel menu laterale sinistro apparirà la sezione **⚙️ AMMINISTRAZIONE**
+4. Clicca su **🖥️ Console Admin** per accedere alla dashboard amministrativa
+
+> ⚠️ Se accedi con un utente senza ruolo `admin`, vedrai una pagina **"Accesso Negato"** con icona lucchetto.
+
+---
+
+### Pagine della Console Admin
+
+#### 🖥️ Dashboard Admin (`/admin`)
+
+La dashboard principale della console amministrativa mostra:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Console di Amministrazione                                      │
+├──────────┬──────────┬──────────┬──────────────────────────────  │
+│ Totale   │ Attive   │Completate│ Con Errore                      │
+│   42     │   12     │   28     │    2                            │
+├──────────┴──────────┴──────────┴──────────────────────────────  │
+│  Task in Attesa per Ruolo                                        │
+├──────────────┬──────────────┬──────────────────────────────     │
+│ Istruttore   │ Ragioniere   │ Dirigente                          │
+│     5        │     3        │     4                              │
+├──────────────┴──────────────┴──────────────────────────────     │
+│  Atti Pubblicati                                                 │
+├──────────────┬──────────────┬──────────────────────────────     │
+│ Ultime 24h   │ Ultimi 7gg   │ Ultimi 30gg                        │
+│     2        │     8        │    21                              │
+└──────────────┴──────────────┴──────────────────────────────     │
+```
+
+#### 🔄 Processi (`/admin/processi`)
+
+Gestione delle istanze di processo con:
+- Filtri per **stato**, **utente** e **intervallo di date**
+- Azioni: **Dettaglio**, **Sospendi** (solo se ATTIVA), **Termina** (con conferma), **Riattiva** (solo se SOSPESA)
+- Badge colorati per lo stato:
+  - 🟢 Verde: PUBBLICATA, FIRMATA
+  - 🟡 Giallo: ISTRUTTORIA, VISTO_CONTABILE, BOZZA
+  - 🔴 Rosso: RIFIUTATA, TERMINATA
+  - ⚫ Grigio: SOSPESA
+
+#### 📋 Audit Log (`/admin/audit`)
+
+Visualizzazione e ricerca del log di audit con:
+- Filtri: **testo libero**, **tipo evento**, **utente**, **data da/a**
+- Tipi evento: PROCESSO_AVVIATO, TASK_COMPLETATO, ATTO_PUBBLICATO, ATTO_RIFIUTATO, LOGIN, LOGOUT, ERRORE
+- Paginazione configurabile (10, 25, 50, 100 righe)
+- Bottone **"⬇️ Esporta CSV"** per scaricare il log filtrato
+- Evidenziazione in rosso degli eventi di tipo ERRORE
+
+#### 👥 Utenti (`/admin/utenti`)
+
+Gestione utenti Keycloak con:
+- Filtri per **ruolo** e **stato** (Attivo/Disabilitato)
+- Azioni: **Dettaglio**, **Modifica Ruoli**, **Disabilita/Abilita**, **Reset Password**
+- Bottone **"+ Nuovo Utente"** per creare utenti con form completo
+
+#### 📐 Regole DMN (`/admin/regole`)
+
+Visualizzazione delle decision table DMN con:
+- Lista dei DMN caricati nel motore Kogito
+- Bottone **"👁️ Visualizza"** → modal con tabella input/output/regole
+- Bottone **"✏️ Apri in KIE Sandbox ↗"** → link diretto all'editor
+
+La regola `verifica-competenza.dmn` mostra:
+
+| Livello Dirigente | Importo     | Competente | Motivazione                    |
+|-------------------|-------------|------------|-------------------------------|
+| D1                | <= 5.000    | true       | D1 competente fino a €5.000   |
+| D2                | <= 25.000   | true       | D2 competente fino a €25.000  |
+| D3                | <= 100.000  | true       | D3 competente fino a €100.000 |
+
+#### 📈 Metriche (`/admin/metriche`)
+
+Dashboard metriche avanzate con:
+- **Metriche JVM**: Heap Memory (con barra progresso), CPU Usage, Thread Attivi, Uptime
+- **Distribuzione stati atti**: contatori per ogni stato
+- **Dashboard Grafana** embed (iframe su http://localhost:3001/d/atti-dashboard)
+- **Auto-refresh ogni 30 secondi** con conto alla rovescia visivo
+
+---
+
+### API Admin (Backend)
+
+| Metodo | Endpoint                              | Descrizione                       |
+|--------|---------------------------------------|-----------------------------------|
+| GET    | `/admin/utenti`                       | Lista utenti Keycloak             |
+| POST   | `/admin/utenti`                       | Crea nuovo utente                 |
+| PUT    | `/admin/utenti/{id}`                  | Aggiorna dati utente              |
+| PUT    | `/admin/utenti/{id}/ruoli`            | Aggiorna ruoli utente             |
+| POST   | `/admin/utenti/{id}/reset-password`   | Invia email reset password        |
+| GET    | `/decisions`                          | Lista DMN disponibili nel motore  |
+
+Tutti gli endpoint `/admin/*` richiedono il ruolo `admin` nel token JWT Keycloak.

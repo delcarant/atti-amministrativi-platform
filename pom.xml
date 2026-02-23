@@ -25,7 +25,6 @@
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.version>3.8.6</quarkus.platform.version>
-    <kogito.version>9.100.1.Final</kogito.version>
     <compiler-plugin.version>3.13.0</compiler-plugin.version>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
     <quarkus-langchain4j.version>0.16.0</quarkus-langchain4j.version>
@@ -37,13 +36,6 @@
         <groupId>${quarkus.platform.group-id}</groupId>
         <artifactId>${quarkus.platform.artifact-id}</artifactId>
         <version>${quarkus.platform.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.kie.kogito</groupId>
-        <artifactId>kogito-bom</artifactId>
-        <version>${kogito.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

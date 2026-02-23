@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import {
   Button,
   FormGroup,
+  FormSelect,
+  FormSelectOption,
   Modal,
   ModalVariant,
   PageSection,
-  Select,
-  SelectOption,
   TextInput,
   Title,
 } from '@patternfly/react-core';
@@ -36,7 +36,6 @@ const AttiList: React.FC = () => {
   const { keycloak } = useKeycloak();
   const [determinazioni, setDeterminazioni] = useState<Determinazione[]>([]);
   const [filtroStato, setFiltroStato] = useState('TUTTI');
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nuovaDet, setNuovaDet] = useState({
     oggetto: '',
@@ -44,8 +43,6 @@ const AttiList: React.FC = () => {
     centroSpesa: '',
     livelloDirigente: 'D1',
   });
-
-  const [isLivelloOpen, setIsLivelloOpen] = useState(false);
 
   const caricaDeterminazioni = () => {
     axios
@@ -86,20 +83,15 @@ const AttiList: React.FC = () => {
       </Title>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        <Select
-          isOpen={isSelectOpen}
-          onToggle={setIsSelectOpen}
-          onSelect={(_e, value) => {
-            setFiltroStato(value as string);
-            setIsSelectOpen(false);
-          }}
-          selections={filtroStato}
+        <FormSelect
+          value={filtroStato}
+          onChange={(_e, v) => setFiltroStato(v)}
           aria-label="Filtra per stato"
         >
           {STATI.map((s) => (
-            <SelectOption key={s} value={s} />
+            <FormSelectOption key={s} value={s} label={s} />
           ))}
-        </Select>
+        </FormSelect>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           Nuova Determinazione
         </Button>
@@ -167,17 +159,16 @@ const AttiList: React.FC = () => {
           />
         </FormGroup>
         <FormGroup label="Livello Dirigente" isRequired fieldId="livelloDirigente">
-          <Select
-            isOpen={isLivelloOpen}
-            onToggle={setIsLivelloOpen}
-            onSelect={(_e, v) => { setNuovaDet({ ...nuovaDet, livelloDirigente: v as string }); setIsLivelloOpen(false); }}
-            selections={nuovaDet.livelloDirigente}
+          <FormSelect
+            id="livelloDirigente"
+            value={nuovaDet.livelloDirigente}
+            onChange={(_e, v) => setNuovaDet({ ...nuovaDet, livelloDirigente: v })}
             aria-label="Livello Dirigente"
           >
-            <SelectOption value="D1" />
-            <SelectOption value="D2" />
-            <SelectOption value="D3" />
-          </Select>
+            <FormSelectOption value="D1" label="D1" />
+            <FormSelectOption value="D2" label="D2" />
+            <FormSelectOption value="D3" label="D3" />
+          </FormSelect>
         </FormGroup>
       </Modal>
     </PageSection>
