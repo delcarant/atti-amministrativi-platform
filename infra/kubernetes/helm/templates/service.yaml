@@ -1,0 +1,35 @@
+# Service del Process Engine
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-process-engine
+  labels:
+    app: process-engine
+    release: {{ .Release.Name }}
+spec:
+  type: {{ .Values.processEngine.service.type }}
+  ports:
+    - port: {{ .Values.processEngine.service.port }}
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app: process-engine
+---
+# Service del Frontend
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-frontend
+  labels:
+    app: frontend
+    release: {{ .Release.Name }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: frontend

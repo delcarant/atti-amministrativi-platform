@@ -1,0 +1,104 @@
+{
+  "realm": "atti-amministrativi",
+  "enabled": true,
+  "displayName": "Atti Amministrativi Platform",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "process-engine",
+      "name": "Process Engine",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "secret",
+      "bearerOnly": true,
+      "publicClient": false,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "frontend",
+      "name": "Frontend React",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true
+    },
+    {
+      "clientId": "kie-sandbox",
+      "name": "KIE Sandbox",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:9090/*"],
+      "webOrigins": ["http://localhost:9090"],
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "istruttore", "description": "Istruttore degli atti amministrativi" },
+      { "name": "ragioniere", "description": "Ragioniere per visto di regolarità contabile" },
+      { "name": "dirigente", "description": "Dirigente firmatario degli atti" },
+      { "name": "admin", "description": "Amministratore della piattaforma" }
+    ]
+  },
+  "users": [
+    {
+      "username": "mario.rossi",
+      "email": "mario.rossi@comune.it",
+      "firstName": "Mario",
+      "lastName": "Rossi",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "Password1!", "temporary": false }
+      ],
+      "realmRoles": ["istruttore"]
+    },
+    {
+      "username": "luigi.bianchi",
+      "email": "luigi.bianchi@comune.it",
+      "firstName": "Luigi",
+      "lastName": "Bianchi",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "Password1!", "temporary": false }
+      ],
+      "realmRoles": ["ragioniere"]
+    },
+    {
+      "username": "anna.verdi",
+      "email": "anna.verdi@comune.it",
+      "firstName": "Anna",
+      "lastName": "Verdi",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "Password1!", "temporary": false }
+      ],
+      "realmRoles": ["dirigente"]
+    },
+    {
+      "username": "admin",
+      "email": "admin@comune.it",
+      "firstName": "Admin",
+      "lastName": "Sistema",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "Password1!", "temporary": false }
+      ],
+      "realmRoles": ["admin"]
+    }
+  ]
+}

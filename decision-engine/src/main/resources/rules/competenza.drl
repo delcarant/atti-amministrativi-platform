@@ -1,0 +1,43 @@
+package it.gov.atti.rules;
+
+import it.gov.atti.model.Determinazione;
+
+/*
+ * Regole Drools per la verifica della competenza dirigenziale.
+ * Complementari al modello DMN verifica-competenza.dmn.
+ * Basate sui limiti stabiliti dal regolamento interno dell'ente.
+ */
+
+/**
+ * Regola: Dirigente D1 con importo superiore a 5.000 euro non è competente.
+ */
+rule "Dirigente D1 non competente per importi > 5000"
+    when
+        $d : Determinazione(livelloDirigente == "D1", importo > 5000)
+    then
+        System.out.println("[DROOLS] D1 non competente: importo " + $d.importo + " supera 5.000 euro");
+        $d.stato = "RIFIUTATA";
+        update($d);
+end
+
+/**
+ * Regola: Dirigente D2 con importo superiore a 50.000 euro non è competente.
+ */
+rule "Dirigente D2 non competente per importi > 50000"
+    when
+        $d : Determinazione(livelloDirigente == "D2", importo > 50000)
+    then
+        System.out.println("[DROOLS] D2 non competente: importo " + $d.importo + " supera 50.000 euro");
+        $d.stato = "RIFIUTATA";
+        update($d);
+end
+
+/**
+ * Regola: Dirigente D3 è sempre competente, indipendentemente dall'importo.
+ */
+rule "Dirigente D3 sempre competente"
+    when
+        $d : Determinazione(livelloDirigente == "D3")
+    then
+        System.out.println("[DROOLS] D3 sempre competente per qualsiasi importo");
+end

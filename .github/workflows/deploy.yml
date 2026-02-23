@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Ambiente di destinazione'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      version:
+        description: 'Versione da deployare (tag)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  deploy:
+    name: Deploy su Kubernetes
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      - name: Configura kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Deploy con Helm
+        run: |
+          helm upgrade --install atti-amministrativi \
+            ./infra/kubernetes/helm \
+            --namespace atti-${{ github.event.inputs.environment }} \
+            --create-namespace \
+            --set processEngine.image.tag=${{ github.event.inputs.version }} \
+            --set frontend.image.tag=${{ github.event.inputs.version }} \
+            --wait \
+            --timeout 10m
+
+      - name: Verifica deployment
+        run: |
+          kubectl rollout status deployment/atti-amministrativi-process-engine \
+            -n atti-${{ github.event.inputs.environment }} \
+            --timeout=5m
