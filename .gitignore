@@ -21,5 +21,8 @@ dist/
 *.war
 *.env
 .env.*
+# Eccezione: il file .env.example è un template e va versionato
+!.env.example
+!**/.env.example
 docker-volumes/
 *.log

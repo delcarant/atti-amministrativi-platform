@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  CardBody,
-  CardTitle,
-  Grid,
-  GridItem,
-  PageSection,
-  Title,
-} from '@patternfly/react-core';
+import { Card, CardBody, CardTitle, Col, Container, Row, Spinner } from 'design-react-kit';
 import { useKeycloak } from '@react-keycloak/web';
 import axios from 'axios';
 
@@ -28,6 +20,7 @@ interface Determinazione {
 const Dashboard: React.FC = () => {
   const { keycloak } = useKeycloak();
   const [determinazioni, setDeterminazioni] = useState<Determinazione[]>([]);
+  const [caricamento, setCaricamento] = useState(true);
 
   useEffect(() => {
     // Recupera tutte le determinazioni dal backend
@@ -36,7 +29,8 @@ const Dashboard: React.FC = () => {
         headers: { Authorization: `Bearer ${keycloak.token}` },
       })
       .then((res) => setDeterminazioni(res.data))
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setCaricamento(false));
   }, [keycloak.token]);
 
   const totale = determinazioni.length;
@@ -46,52 +40,46 @@ const Dashboard: React.FC = () => {
   const firmate = determinazioni.filter((d) => d.stato === 'FIRMATA').length;
   const pubblicate = determinazioni.filter((d) => d.stato === 'PUBBLICATA').length;
 
+  if (caricamento) {
+    return (
+      <Container className="py-4 text-center">
+        <Spinner active label="Caricamento dashboard..." />
+      </Container>
+    );
+  }
+
+  /** Dati delle card statistiche */
+  const cards = [
+    { titolo: 'Totale Determinazioni', valore: totale, colore: 'var(--colore-primario, #0066cc)' },
+    { titolo: 'In Lavorazione', valore: inLavorazione, colore: '#f0ab00' },
+    { titolo: 'Firmate', valore: firmate, colore: '#0066cc' },
+    { titolo: 'Pubblicate', valore: pubblicate, colore: '#3e8635' },
+  ];
+
   return (
-    <PageSection>
-      <Title headingLevel="h1" size="xl" style={{ marginBottom: '1rem' }}>
-        Dashboard
-      </Title>
-      <Grid hasGutter>
-        <GridItem span={3}>
-          <Card>
-            <CardTitle>Totale Determinazioni</CardTitle>
-            <CardBody>
-              <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>{totale}</span>
-            </CardBody>
-          </Card>
-        </GridItem>
-        <GridItem span={3}>
-          <Card>
-            <CardTitle>In Lavorazione</CardTitle>
-            <CardBody>
-              <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f0ab00' }}>
-                {inLavorazione}
-              </span>
-            </CardBody>
-          </Card>
-        </GridItem>
-        <GridItem span={3}>
-          <Card>
-            <CardTitle>Firmate</CardTitle>
-            <CardBody>
-              <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#06c' }}>
-                {firmate}
-              </span>
-            </CardBody>
-          </Card>
-        </GridItem>
-        <GridItem span={3}>
-          <Card>
-            <CardTitle>Pubblicate</CardTitle>
-            <CardBody>
-              <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#3e8635' }}>
-                {pubblicate}
-              </span>
-            </CardBody>
-          </Card>
-        </GridItem>
-      </Grid>
-    </PageSection>
+    <Container className="py-4">
+      <h1 className="h3 mb-4">Dashboard</h1>
+      <Row>
+        {cards.map(({ titolo, valore, colore }) => (
+          <Col key={titolo} xs={12} sm={6} lg={3} className="mb-3">
+            <Card>
+              <CardBody>
+                <CardTitle tag="h2" className="h6 text-muted mb-2">
+                  {titolo}
+                </CardTitle>
+                <span
+                  className="d-block"
+                  style={{ fontSize: '2rem', fontWeight: 'bold', color: colore }}
+                  aria-label={`${titolo}: ${valore}`}
+                >
+                  {valore}
+                </span>
+              </CardBody>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </Container>
   );
 };
 

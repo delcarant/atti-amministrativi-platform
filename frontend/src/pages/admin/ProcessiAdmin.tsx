@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
 import {
   Alert,
+  Badge,
   Button,
+  Container,
   FormGroup,
-  FormSelect,
-  FormSelectOption,
+  Input,
+  Label,
   Modal,
-  ModalVariant,
-  PageSection,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   Spinner,
-  TextInput,
-  Title,
-  Toolbar,
-  ToolbarContent,
-  ToolbarItem,
-} from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+  Table,
+} from 'design-react-kit';
 import { useKeycloak } from '@react-keycloak/web';
 import axios from 'axios';
 import { useProcessInstances, ProcessFilter, ProcessInstance } from '../../hooks/useAdmin';
@@ -28,18 +26,18 @@ const coloreStato = (stato: string): string => {
   switch (stato) {
     case 'PUBBLICATA':
     case 'FIRMATA':
-      return '#3e8635';
+      return 'success';
     case 'ISTRUTTORIA':
     case 'VISTO_CONTABILE':
     case 'BOZZA':
-      return '#f0ab00';
+      return 'warning';
     case 'RIFIUTATA':
     case 'TERMINATA':
-      return '#c9190b';
+      return 'danger';
     case 'SOSPESA':
-      return '#6a6e73';
+      return 'secondary';
     default:
-      return '#6a6e73';
+      return 'secondary';
   }
 };
 
@@ -102,7 +100,6 @@ const ProcessiAdmin: React.FC = () => {
       )
       .then(() => {
         setMessaggioOperazione({ tipo: 'success', testo: `Stato aggiornato a ${nuovoStato}` });
-        // Aggiorna la lista riapplicando i filtri
         setFiltriApplicati({ ...filtriApplicati });
       })
       .catch((err) => {
@@ -112,235 +109,244 @@ const ProcessiAdmin: React.FC = () => {
   };
 
   return (
-    <PageSection>
-      <Title headingLevel="h1" size="xl" style={{ marginBottom: '1rem' }}>
-        Gestione Istanze di Processo
-      </Title>
+    <Container className="py-4">
+      <h1 className="h3 mb-4">Gestione Istanze di Processo</h1>
 
       {/* Messaggio operazione */}
       {messaggioOperazione && (
-        <Alert
-          variant={messaggioOperazione.tipo}
-          title={messaggioOperazione.testo}
-          isInline
-          actionClose={<Button variant="plain" onClick={() => setMessaggioOperazione(null)}>×</Button>}
-          style={{ marginBottom: '1rem' }}
-        />
+        <Alert color={messaggioOperazione.tipo} className="mb-3" isOpen toggle={() => setMessaggioOperazione(null)}>
+          {messaggioOperazione.testo}
+        </Alert>
       )}
 
-      {/* Toolbar filtri */}
-      <Toolbar style={{ marginBottom: '1rem' }}>
-        <ToolbarContent>
-          <ToolbarItem>
-            <FormSelect
-              value={filtroStato}
-              onChange={(_e, v) => setFiltroStato(v)}
-              aria-label="Filtra per stato"
-            >
-              {STATI_FILTRO.map((s) => (
-                <FormSelectOption key={s} value={s} label={s} />
-              ))}
-            </FormSelect>
-          </ToolbarItem>
-          <ToolbarItem>
-            <TextInput
-              placeholder="Filtra per utente"
-              value={filtroUtente}
-              onChange={(_e, v) => setFiltroUtente(v)}
-              aria-label="Filtra per utente"
-            />
-          </ToolbarItem>
-          <ToolbarItem>
-            <FormGroup label="Da" fieldId="filtroDa">
-              <TextInput
-                id="filtroDa"
-                type="date"
-                value={filtroDa}
-                onChange={(_e, v) => setFiltroDa(v)}
-                aria-label="Data da"
-              />
-            </FormGroup>
-          </ToolbarItem>
-          <ToolbarItem>
-            <FormGroup label="A" fieldId="filtroA">
-              <TextInput
-                id="filtroA"
-                type="date"
-                value={filtroA}
-                onChange={(_e, v) => setFiltroA(v)}
-                aria-label="Data a"
-              />
-            </FormGroup>
-          </ToolbarItem>
-          <ToolbarItem>
-            <Button variant="primary" onClick={applicaFiltri}>Applica</Button>
-          </ToolbarItem>
-          <ToolbarItem>
-            <Button variant="link" onClick={reimpostaFiltri}>Reimposta</Button>
-          </ToolbarItem>
-        </ToolbarContent>
-      </Toolbar>
+      {/* Barra filtri */}
+      <div className="d-flex gap-2 align-items-end mb-3 flex-wrap">
+        <div>
+          <Label for="filtroStatoP">Stato</Label>
+          <Input
+            id="filtroStatoP"
+            type="select"
+            value={filtroStato}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroStato(e.target.value)}
+            aria-label="Filtra per stato"
+            noWrapper
+          >
+            {STATI_FILTRO.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </Input>
+        </div>
+        <FormGroup>
+          <Input
+            id="filtroUtenteP"
+            label="Utente"
+            placeholder="Filtra per utente"
+            value={filtroUtente}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroUtente(e.target.value)}
+          />
+        </FormGroup>
+        <FormGroup>
+          <Input
+            id="filtroDaP"
+            type="date"
+            label="Da"
+            value={filtroDa}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroDa(e.target.value)}
+          />
+        </FormGroup>
+        <FormGroup>
+          <Input
+            id="filtroAP"
+            type="date"
+            label="A"
+            value={filtroA}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFiltroA(e.target.value)}
+          />
+        </FormGroup>
+        <div className="d-flex gap-2">
+          <Button color="primary" onClick={applicaFiltri}>Applica</Button>
+          <Button color="secondary" outline onClick={reimpostaFiltri}>Reimposta</Button>
+        </div>
+      </div>
 
-      {/* Stato caricamento o errore */}
-      {caricamento && <Spinner aria-label="Caricamento istanze" size="xl" />}
+      {caricamento && (
+        <div className="text-center py-4">
+          <Spinner active label="Caricamento istanze..." />
+        </div>
+      )}
+
       {errore && (
-        <Alert variant="danger" title="Errore caricamento istanze" isInline>
-          {errore}
-        </Alert>
+        <Alert color="danger">{errore}</Alert>
       )}
 
       {/* Tabella istanze */}
       {!caricamento && !errore && (
-        <Table aria-label="Istanze di processo">
-          <Thead>
-            <Tr>
-              <Th>ID Istanza</Th>
-              <Th>Oggetto</Th>
-              <Th>Stato</Th>
-              <Th>Avviato da</Th>
-              <Th>Data Avvio</Th>
-              <Th>Importo (€)</Th>
-              <Th>Azioni</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
+        <Table responsive hover striped aria-label="Istanze di processo">
+          <thead>
+            <tr>
+              <th scope="col">ID Istanza</th>
+              <th scope="col">Oggetto</th>
+              <th scope="col">Stato</th>
+              <th scope="col">Dirigente</th>
+              <th scope="col">Importo (€)</th>
+              <th scope="col">Data</th>
+              <th scope="col">Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
             {istanze.length === 0 ? (
-              <Tr>
-                <Td colSpan={7}>Nessuna istanza trovata</Td>
-              </Tr>
+              <tr>
+                <td colSpan={7} className="text-center text-muted py-3">Nessuna istanza trovata</td>
+              </tr>
             ) : (
               istanze.map((ist) => (
-                <Tr key={ist.id}>
-                  <Td>{ist.id}</Td>
-                  <Td>{ist.oggetto}</Td>
-                  <Td>
-                    <span
-                      style={{
-                        backgroundColor: coloreStato(ist.stato),
-                        color: '#fff',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.8rem',
-                      }}
-                    >
+                <tr key={ist.id}>
+                  <td>{ist.processInstanceId ?? ist.id}</td>
+                  <td>{ist.oggetto}</td>
+                  <td>
+                    <Badge color={coloreStato(ist.stato)} pill>
                       {ist.stato}
-                    </span>
-                  </Td>
-                  <Td>{ist.dirigente}</Td>
-                  <Td>{ist.dataCreazione ? new Date(ist.dataCreazione).toLocaleDateString('it-IT') : '-'}</Td>
-                  <Td>{ist.importo?.toLocaleString('it-IT')}</Td>
-                  <Td>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    </Badge>
+                  </td>
+                  <td>{ist.dirigente}</td>
+                  <td>{ist.importo?.toLocaleString('it-IT')}</td>
+                  <td>
+                    {ist.dataCreazione
+                      ? new Date(ist.dataCreazione).toLocaleDateString('it-IT')
+                      : '-'}
+                  </td>
+                  <td>
+                    <div className="d-flex gap-1 flex-wrap">
                       <Button
-                        variant="secondary"
+                        color="secondary"
                         size="sm"
-                        onClick={() => { setIstanzaSelezionata(ist); setIsDettaglioOpen(true); }}
+                        outline
+                        onClick={() => {
+                          setIstanzaSelezionata(ist);
+                          setIsDettaglioOpen(true);
+                        }}
                       >
                         Dettaglio
                       </Button>
-                      {(ist.stato === 'ISTRUTTORIA' || ist.stato === 'VISTO_CONTABILE' || ist.stato === 'BOZZA') && (
+                      {ist.stato !== 'SOSPESA' && ist.stato !== 'TERMINATA' && (
                         <Button
-                          variant="warning"
+                          color="warning"
                           size="sm"
-                          isDisabled={operazioneInCorso}
+                          disabled={operazioneInCorso}
                           onClick={() => aggiornaStato(ist, 'SOSPESA')}
                         >
                           Sospendi
                         </Button>
                       )}
-                      {ist.stato !== 'TERMINATA' && ist.stato !== 'PUBBLICATA' && (
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          isDisabled={operazioneInCorso}
-                          onClick={() => { setIstanzaDaTerminare(ist); setIsConfermaTerminaOpen(true); }}
-                        >
-                          Termina
-                        </Button>
-                      )}
                       {ist.stato === 'SOSPESA' && (
                         <Button
-                          variant="primary"
+                          color="success"
                           size="sm"
-                          isDisabled={operazioneInCorso}
+                          disabled={operazioneInCorso}
                           onClick={() => aggiornaStato(ist, 'ISTRUTTORIA')}
                         >
                           Riattiva
                         </Button>
                       )}
+                      {ist.stato !== 'TERMINATA' && ist.stato !== 'PUBBLICATA' && (
+                        <Button
+                          color="danger"
+                          size="sm"
+                          disabled={operazioneInCorso}
+                          onClick={() => {
+                            setIstanzaDaTerminare(ist);
+                            setIsConfermaTerminaOpen(true);
+                          }}
+                        >
+                          Termina
+                        </Button>
+                      )}
                     </div>
-                  </Td>
-                </Tr>
+                  </td>
+                </tr>
               ))
             )}
-          </Tbody>
+          </tbody>
         </Table>
       )}
 
       {/* Modal dettaglio istanza */}
       <Modal
-        variant={ModalVariant.large}
-        title={`Dettaglio Istanza #${istanzaSelezionata?.id}`}
         isOpen={isDettaglioOpen}
-        onClose={() => setIsDettaglioOpen(false)}
-        actions={[
-          <Button key="chiudi" variant="primary" onClick={() => setIsDettaglioOpen(false)}>
-            Chiudi
-          </Button>,
-        ]}
+        toggle={() => setIsDettaglioOpen(false)}
+        labelledBy="modal-dettaglio-title"
+        size="lg"
       >
-        {istanzaSelezionata && (
-          <dl style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem 1rem' }}>
-            <dt><strong>ID:</strong></dt><dd>{istanzaSelezionata.id}</dd>
-            <dt><strong>Numero:</strong></dt><dd>{istanzaSelezionata.numero}</dd>
-            <dt><strong>Oggetto:</strong></dt><dd>{istanzaSelezionata.oggetto}</dd>
-            <dt><strong>Stato:</strong></dt>
-            <dd>
-              <span style={{ backgroundColor: coloreStato(istanzaSelezionata.stato), color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>
-                {istanzaSelezionata.stato}
-              </span>
-            </dd>
-            <dt><strong>Dirigente:</strong></dt><dd>{istanzaSelezionata.dirigente}</dd>
-            <dt><strong>Importo:</strong></dt><dd>€ {istanzaSelezionata.importo?.toLocaleString('it-IT')}</dd>
-            <dt><strong>Data Creazione:</strong></dt>
-            <dd>{istanzaSelezionata.dataCreazione ? new Date(istanzaSelezionata.dataCreazione).toLocaleString('it-IT') : '-'}</dd>
-            <dt><strong>ID Processo Kogito:</strong></dt><dd>{istanzaSelezionata.processInstanceId ?? '-'}</dd>
-          </dl>
-        )}
+        <ModalHeader toggle={() => setIsDettaglioOpen(false)} id="modal-dettaglio-title">
+          Dettaglio Istanza: {istanzaSelezionata?.processInstanceId ?? istanzaSelezionata?.id}
+        </ModalHeader>
+        <ModalBody>
+          {istanzaSelezionata && (
+            <dl className="row">
+              <dt className="col-sm-4">Numero:</dt>
+              <dd className="col-sm-8">{istanzaSelezionata.numero}</dd>
+              <dt className="col-sm-4">Oggetto:</dt>
+              <dd className="col-sm-8">{istanzaSelezionata.oggetto}</dd>
+              <dt className="col-sm-4">Stato:</dt>
+              <dd className="col-sm-8">
+                <Badge color={coloreStato(istanzaSelezionata.stato)} pill>
+                  {istanzaSelezionata.stato}
+                </Badge>
+              </dd>
+              <dt className="col-sm-4">Dirigente:</dt>
+              <dd className="col-sm-8">{istanzaSelezionata.dirigente}</dd>
+              <dt className="col-sm-4">Importo:</dt>
+              <dd className="col-sm-8">€ {istanzaSelezionata.importo?.toLocaleString('it-IT')}</dd>
+              <dt className="col-sm-4">Data Creazione:</dt>
+              <dd className="col-sm-8">
+                {istanzaSelezionata.dataCreazione
+                  ? new Date(istanzaSelezionata.dataCreazione).toLocaleString('it-IT')
+                  : '-'}
+              </dd>
+            </dl>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={() => setIsDettaglioOpen(false)}>Chiudi</Button>
+        </ModalFooter>
       </Modal>
 
-      {/* Dialog conferma terminazione */}
+      {/* Modal conferma terminazione */}
       <Modal
-        variant={ModalVariant.small}
-        title="Conferma Terminazione"
         isOpen={isConfermaTerminaOpen}
-        onClose={() => setIsConfermaTerminaOpen(false)}
-        actions={[
+        toggle={() => setIsConfermaTerminaOpen(false)}
+        labelledBy="modal-termina-title"
+        size="sm"
+      >
+        <ModalHeader toggle={() => setIsConfermaTerminaOpen(false)} id="modal-termina-title">
+          Conferma Terminazione
+        </ModalHeader>
+        <ModalBody>
+          <p>
+            Sei sicuro di voler terminare il processo{' '}
+            <strong>{istanzaDaTerminare?.processInstanceId ?? istanzaDaTerminare?.id}</strong>?
+          </p>
+          <p className="text-danger">Questa operazione non può essere annullata.</p>
+        </ModalBody>
+        <ModalFooter>
           <Button
-            key="termina"
-            variant="danger"
-            isDisabled={operazioneInCorso}
+            color="danger"
+            disabled={operazioneInCorso}
             onClick={() => {
               if (istanzaDaTerminare) {
                 aggiornaStato(istanzaDaTerminare, 'TERMINATA');
-                setIsConfermaTerminaOpen(false);
               }
+              setIsConfermaTerminaOpen(false);
             }}
           >
-            Sì, Termina
-          </Button>,
-          <Button key="annulla" variant="link" onClick={() => setIsConfermaTerminaOpen(false)}>
+            Conferma Terminazione
+          </Button>
+          <Button color="secondary" outline onClick={() => setIsConfermaTerminaOpen(false)}>
             Annulla
-          </Button>,
-        ]}
-      >
-        <p>
-          Sei sicuro di voler terminare l'istanza <strong>#{istanzaDaTerminare?.id}</strong> —{' '}
-          <em>{istanzaDaTerminare?.oggetto}</em>?
-        </p>
-        <p>L'operazione non è reversibile.</p>
+          </Button>
+        </ModalFooter>
       </Modal>
-    </PageSection>
+    </Container>
   );
 };
 
