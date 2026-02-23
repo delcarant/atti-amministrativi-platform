@@ -28,6 +28,7 @@
     <kogito.version>9.100.1.Final</kogito.version>
     <compiler-plugin.version>3.13.0</compiler-plugin.version>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
+    <quarkus-langchain4j.version>0.16.0</quarkus-langchain4j.version>
   </properties>
 
   <dependencyManagement>

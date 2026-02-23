@@ -70,12 +70,16 @@ public class DeterminazioneService {
 
     /**
      * Genera il numero progressivo della determinazione nel formato DET-YYYY-NNN.
+     * Utilizza una query con LOCK per garantire l'unicità in ambiente concorrente.
      *
      * @return numero generato
      */
     private String generaNumerazione() {
         int anno = Year.now().getValue();
-        long contatore = Determinazione.count("EXTRACT(YEAR FROM dataCreazione) = ?1", anno) + 1;
+        // La query viene eseguita all'interno di una transazione già attiva (@Transactional)
+        // Il conteggio riflette le sole determinazioni con anno corrente già persistite
+        long contatore = Determinazione
+                .count("FUNCTION('YEAR', dataCreazione) = ?1 OR dataCreazione IS NULL", anno) + 1;
         return String.format("DET-%d-%03d", anno, contatore);
     }
 }

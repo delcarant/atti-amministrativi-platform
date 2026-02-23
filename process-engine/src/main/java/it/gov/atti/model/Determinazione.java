@@ -1,8 +1,10 @@
 package it.gov.atti.model;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 
 /**
@@ -10,7 +12,9 @@ import java.time.LocalDateTime;
  * Mappata sulla tabella 'determinazioni' nel database PostgreSQL.
  */
 @Entity
-@Table(name = "determinazioni")
+@Table(name = "determinazioni", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_determinazioni_numero", columnNames = "numero")
+})
 public class Determinazione extends PanacheEntity {
 
     /** Oggetto della determinazione */
@@ -44,5 +48,6 @@ public class Determinazione extends PanacheEntity {
     public String processInstanceId;
 
     /** Numero identificativo della determinazione, es. DET-2026-001 */
+    @Column(unique = true)
     public String numero;
 }
