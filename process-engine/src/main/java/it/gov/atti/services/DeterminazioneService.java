@@ -75,7 +75,7 @@ public class DeterminazioneService {
      */
     private String generaNumerazione() {
         int anno = Year.now().getValue();
-        long contatore = Determinazione.count("YEAR(dataCreazione) = ?1", anno) + 1;
+        long contatore = Determinazione.count("EXTRACT(YEAR FROM dataCreazione) = ?1", anno) + 1;
         return String.format("DET-%d-%03d", anno, contatore);
     }
 }

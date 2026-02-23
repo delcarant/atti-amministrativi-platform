@@ -45,6 +45,8 @@ const AttiList: React.FC = () => {
     livelloDirigente: 'D1',
   });
 
+  const [isLivelloOpen, setIsLivelloOpen] = useState(false);
+
   const caricaDeterminazioni = () => {
     axios
       .get('/determinazioni', {
@@ -166,9 +168,9 @@ const AttiList: React.FC = () => {
         </FormGroup>
         <FormGroup label="Livello Dirigente" isRequired fieldId="livelloDirigente">
           <Select
-            isOpen={false}
-            onToggle={() => {}}
-            onSelect={(_e, v) => setNuovaDet({ ...nuovaDet, livelloDirigente: v as string })}
+            isOpen={isLivelloOpen}
+            onToggle={setIsLivelloOpen}
+            onSelect={(_e, v) => { setNuovaDet({ ...nuovaDet, livelloDirigente: v as string }); setIsLivelloOpen(false); }}
             selections={nuovaDet.livelloDirigente}
             aria-label="Livello Dirigente"
           >

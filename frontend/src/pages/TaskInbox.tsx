@@ -35,11 +35,12 @@ const TaskInbox: React.FC = () => {
   );
 
   const caricaTask = () => {
+    const safeRuolo = (ruoloUtente ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
     axios
       .get(`/q/graphql`, {
         headers: { Authorization: `Bearer ${keycloak.token}` },
         params: {
-          query: `{ UserTaskInstances(where: { potentialGroups: { contains: "${ruoloUtente}" } }) { id name processInstanceId actualOwner } }`,
+          query: `{ UserTaskInstances(where: { potentialGroups: { contains: "${safeRuolo}" } }) { id name processInstanceId actualOwner } }`,
         },
       })
       .then((res) => setTasks(res.data?.data?.UserTaskInstances ?? []))
